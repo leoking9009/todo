@@ -1,37 +1,145 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Simple To-Do App</title>
+  <title>업무 관리 시스템</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" type="text/css" href="style.css">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
   <div id="login-container" class="container">
-    <h2>Login</h2>
-    <div id="g_id_onload"
-         data-client_id="862490969904-dfe7drgs2tjjkaj09f9c0k5iba0r7ckf.apps.googleusercontent.com"
-         data-callback="handleCredentialResponse">
-    </div>
-    <div class="g_id_signin"
-         data-type="standard"
-         data-shape="rectangular"
-         data-theme="outline"
-         data-text="signin_with"
-         data-size="large"
-         data-logo_alignment="left">
+    <div class="login-card">
+      <h2>업무 관리 시스템</h2>
+      <p>구글 계정으로 로그인하여 업무를 관리하세요</p>
+      <div id="g_id_onload"
+           data-client_id="862490969904-dfe7drgs2tjjkaj09f9c0k5iba0r7ckf.apps.googleusercontent.com"
+           data-callback="handleCredentialResponse">
+      </div>
+      <div class="g_id_signin"
+           data-type="standard"
+           data-shape="rectangular"
+           data-theme="outline"
+           data-text="signin_with"
+           data-size="large"
+           data-logo_alignment="left">
+      </div>
     </div>
   </div>
 
-  <div id="app-container" class="container" style="display:none;">
-    <div id="user-profile"></div>
-    <button id="logoutButton">Logout</button>
-    <h1>To-Do List</h1>
-    <input type="text" id="taskInput" placeholder="Add a new task...">
-    <button id="addButton">Add</button>
-    <ul id="taskList"></ul>
+  <div id="app-container" style="display:none;">
+    <header class="header">
+      <div class="header-content">
+        <h1>📋 업무 관리 시스템</h1>
+        <div class="user-menu">
+          <div id="user-profile"></div>
+          <button id="logoutButton" class="btn-logout">로그아웃</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- 대시보드 (전광판) -->
+    <div id="dashboard" class="dashboard">
+      <div class="stats-grid">
+        <div class="stat-card total">
+          <h3>전체 과제</h3>
+          <div class="stat-number" id="totalTasks">0</div>
+        </div>
+        <div class="stat-card completed">
+          <h3>완료 과제</h3>
+          <div class="stat-number" id="completedTasks">0</div>
+        </div>
+        <div class="stat-card pending">
+          <h3>진행 중</h3>
+          <div class="stat-number" id="pendingTasks">0</div>
+        </div>
+        <div class="stat-card urgent">
+          <h3>긴급 과제</h3>
+          <div class="stat-number" id="urgentTasks">0</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 네비게이션 탭 -->
+    <nav class="nav-tabs">
+      <button class="tab-btn active" data-tab="add">➕ 과제 등록</button>
+      <button class="tab-btn" data-tab="all">📋 전체 과제</button>
+      <button class="tab-btn" data-tab="assignee">👤 담당자별</button>
+      <button class="tab-btn" data-tab="completed">✅ 완료 과제</button>
+      <button class="tab-btn" data-tab="urgent">🚨 긴급 과제</button>
+    </nav>
+
+    <!-- 과제 등록 폼 -->
+    <div id="tab-add" class="tab-content active">
+      <div class="form-container">
+        <h2>새 과제 등록</h2>
+        <form id="taskForm" class="task-form">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="assignee">담당자 *</label>
+              <input type="text" id="assignee" name="assignee" required placeholder="담당자명을 입력하세요">
+            </div>
+            <div class="form-group">
+              <label for="taskName">과제명 *</label>
+              <input type="text" id="taskName" name="taskName" required placeholder="과제명을 입력하세요">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="submissionTarget">제출처</label>
+              <input type="text" id="submissionTarget" name="submissionTarget" placeholder="제출처를 입력하세요">
+            </div>
+            <div class="form-group checkbox-group">
+              <label class="checkbox-label">
+                <input type="checkbox" id="isUrgent" name="isUrgent">
+                <span class="checkmark"></span>
+                긴급 과제
+              </label>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="notes">비고</label>
+            <textarea id="notes" name="notes" placeholder="추가 정보나 특이사항을 입력하세요"></textarea>
+          </div>
+          <button type="submit" class="btn-submit">과제 등록</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- 전체 과제 목록 -->
+    <div id="tab-all" class="tab-content">
+      <div class="task-list-container">
+        <h2>전체 과제 목록</h2>
+        <div id="taskList" class="task-grid"></div>
+      </div>
+    </div>
+
+    <!-- 담당자별 관리 -->
+    <div id="tab-assignee" class="tab-content">
+      <div class="assignee-container">
+        <h2>담당자별 과제 관리</h2>
+        <div id="assigneeStats" class="assignee-stats"></div>
+        <div id="assigneeDetails" class="assignee-details"></div>
+      </div>
+    </div>
+
+    <!-- 완료 과제 -->
+    <div id="tab-completed" class="tab-content">
+      <div class="task-list-container">
+        <h2>완료된 과제</h2>
+        <div id="completedTaskList" class="task-grid"></div>
+      </div>
+    </div>
+
+    <!-- 긴급 과제 -->
+    <div id="tab-urgent" class="tab-content">
+      <div class="task-list-container">
+        <h2>긴급 과제</h2>
+        <div id="urgentTaskList" class="task-grid"></div>
+      </div>
+    </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="script.js"></script>
 </body>
 </html>
