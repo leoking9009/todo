@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>업무 관리 시스템 (개발 모드)</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" type="text/css" href="style.css">
+  <style>
+    /* 개발 모드 표시 */
+    .dev-banner {
+      background: #ff6b6b;
+      color: white;
+      text-align: center;
+      padding: 8px;
+      font-weight: bold;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      font-size: 14px;
+    }
+    
+    body {
+      padding-top: 40px;
+    }
+    
+    .login-card {
+      margin-top: 20px;
+    }
+    
+    .login-card::before {
+      content: '🚧 개발 모드: 자동 로그인됩니다';
+      display: block;
+      background: #ffe066;
+      color: #333;
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-weight: bold;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="dev-banner">
+    🚧 개발 모드 - 목업 데이터를 사용합니다
+  </div>
+
+  <div id="login-container" class="container">
+    <div class="login-card">
+      <h2>업무 관리 시스템</h2>
+      <p>개발 모드에서는 자동으로 로그인됩니다</p>
+      <div class="loading">
+        <div class="spinner"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="app-container" style="display:none;">
+    <header class="header">
+      <div class="header-content">
+        <h1>📋 업무 관리 시스템</h1>
+        <div class="user-menu">
+          <div id="user-profile"></div>
+          <button id="logoutButton" class="btn-logout">로그아웃</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- 대시보드 (전광판) -->
+    <div id="dashboard" class="dashboard">
+      <div class="stats-grid">
+        <div class="stat-card total">
+          <h3>전체 과제</h3>
+          <div class="stat-number" id="totalTasks">0</div>
+        </div>
+        <div class="stat-card completed">
+          <h3>완료 과제</h3>
+          <div class="stat-number" id="completedTasks">0</div>
+        </div>
+        <div class="stat-card pending">
+          <h3>진행 중</h3>
+          <div class="stat-number" id="pendingTasks">0</div>
+        </div>
+        <div class="stat-card urgent">
+          <h3>긴급 과제</h3>
+          <div class="stat-number" id="urgentTasks">0</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 네비게이션 탭 -->
+    <nav class="nav-tabs">
+      <button class="tab-btn active" data-tab="add">➕ 과제 등록</button>
+      <button class="tab-btn" data-tab="all">📋 전체 과제</button>
+      <button class="tab-btn" data-tab="assignee">👤 담당자별</button>
+      <button class="tab-btn" data-tab="completed">✅ 완료 과제</button>
+      <button class="tab-btn" data-tab="urgent">🚨 긴급 과제</button>
+    </nav>
+
+    <!-- 과제 등록 폼 -->
+    <div id="tab-add" class="tab-content active">
+      <div class="form-container">
+        <h2>새 과제 등록</h2>
+        <form id="taskForm" class="task-form">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="assignee">담당자 *</label>
+              <input type="text" id="assignee" name="assignee" required placeholder="담당자명을 입력하세요">
+            </div>
+            <div class="form-group">
+              <label for="taskName">과제명 *</label>
+              <input type="text" id="taskName" name="taskName" required placeholder="과제명을 입력하세요">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="submissionTarget">제출처</label>
+              <input type="text" id="submissionTarget" name="submissionTarget" placeholder="제출처를 입력하세요">
+            </div>
+            <div class="form-group checkbox-group">
+              <label class="checkbox-label">
+                <input type="checkbox" id="isUrgent" name="isUrgent">
+                <span class="checkmark"></span>
+                긴급 과제
+              </label>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="notes">비고</label>
+            <textarea id="notes" name="notes" placeholder="추가 정보나 특이사항을 입력하세요"></textarea>
+          </div>
+          <button type="submit" class="btn-submit">과제 등록</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- 전체 과제 목록 -->
+    <div id="tab-all" class="tab-content">
+      <div class="task-list-container">
+        <h2>전체 과제 목록</h2>
+        <div id="taskList" class="task-grid"></div>
+      </div>
+    </div>
+
+    <!-- 담당자별 관리 -->
+    <div id="tab-assignee" class="tab-content">
+      <div class="assignee-container">
+        <h2>담당자별 과제 관리</h2>
+        <div id="assigneeStats" class="assignee-stats"></div>
+        <div id="assigneeDetails" class="assignee-details"></div>
+      </div>
+    </div>
+
+    <!-- 완료 과제 -->
+    <div id="tab-completed" class="tab-content">
+      <div class="task-list-container">
+        <h2>완료된 과제</h2>
+        <div id="completedTaskList" class="task-grid"></div>
+      </div>
+    </div>
+
+    <!-- 긴급 과제 -->
+    <div id="tab-urgent" class="tab-content">
+      <div class="task-list-container">
+        <h2>긴급 과제</h2>
+        <div id="urgentTaskList" class="task-grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="script-dev.js"></script>
+</body>
+</html>
