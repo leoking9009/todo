@@ -111,7 +111,7 @@ function refreshCurrentTab() {
       renderTaskList(allTasks.filter(task => task.is_completed), 'completedTaskList');
       break;
     case 'urgent':
-      renderTaskList(allTasks.filter(task => task.is_urgent && !task.is_completed), 'urgentTaskList');
+      renderTaskList(allTasks.filter(task => task.is_urgent), 'urgentTaskList');
       break;
     case 'assignee':
       renderAssigneeView();
@@ -122,14 +122,27 @@ function refreshCurrentTab() {
   }
 }
 
-// 과제 목록 렌더링
-function renderTaskList(tasks, containerId) {
+// 과제 목록 렌더링 (카드형 또는 테이블형)
+function renderTaskList(tasks, containerId, viewType = 'grid') {
   const container = document.getElementById(containerId);
   
   if (tasks.length === 0) {
     container.innerHTML = '<p style="text-align: center; color: #666; padding: 2rem;">표시할 과제가 없습니다.</p>';
     return;
   }
+  
+  // 보기 형태에 따라 다른 렌더링
+  if (viewType === 'table') {
+    renderTaskTable(tasks, containerId);
+  } else {
+    renderTaskGrid(tasks, containerId);
+  }
+}
+
+// 카드형 보기 렌더링
+function renderTaskGrid(tasks, containerId) {
+  const container = document.getElementById(containerId);
+  container.className = 'task-grid';
   
   container.innerHTML = tasks.map(task => `
     <div class="task-card ${task.is_urgent ? 'urgent' : ''} ${task.is_completed ? 'completed' : ''}" data-id="${task.id}">
@@ -154,10 +167,71 @@ function renderTaskList(tasks, containerId) {
           '<button class="btn-action btn-complete" onclick="toggleTaskComplete(' + task.id + ')">완료</button>' :
           '<button class="btn-action btn-undo" onclick="toggleTaskComplete(' + task.id + ')">완료취소</button>'
         }
+        <button class="btn-action btn-edit" onclick="openEditModal(' + task.id + ')">수정</button>
         <button class="btn-action btn-delete" onclick="deleteTask(${task.id})">삭제</button>
       </div>
     </div>
   `).join('');
+}
+
+// 테이블형 보기 렌더링
+function renderTaskTable(tasks, containerId) {
+  const container = document.getElementById(containerId);
+  container.className = 'task-table-container';
+  
+  container.innerHTML = `
+    <div class="table-wrapper">
+      <table class="task-table">
+        <thead>
+          <tr>
+            <th>상태</th>
+            <th>과제명</th>
+            <th>담당자</th>
+            <th>마감기한</th>
+            <th>제출처</th>
+            <th>생성일</th>
+            <th>비고</th>
+            <th>작업</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${tasks.map(task => `
+            <tr class="task-row ${task.is_urgent ? 'urgent' : ''} ${task.is_completed ? 'completed' : ''}" data-id="${task.id}">
+              <td class="status-cell">
+                <div class="status-badges">
+                  ${task.is_completed ? '<span class="badge completed">✓ 완료</span>' : ''}
+                  ${task.is_urgent && !task.is_completed ? '<span class="badge urgent">긴급</span>' : ''}
+                  ${task.deadline ? getDeadlineStatus(task.deadline) : ''}
+                </div>
+              </td>
+              <td class="task-name-cell">
+                <strong>${escapeHtml(task.task_name)}</strong>
+              </td>
+              <td>${escapeHtml(task.assignee)}</td>
+              <td class="deadline-cell">
+                ${task.deadline ? formatDate(task.deadline) : '-'}
+              </td>
+              <td>${task.submission_target ? escapeHtml(task.submission_target) : '-'}</td>
+              <td class="created-cell">${formatDate(task.created_date)}</td>
+              <td class="notes-cell" title="${task.notes ? escapeHtml(task.notes) : ''}">
+                ${task.notes ? (task.notes.length > 30 ? escapeHtml(task.notes).substring(0, 30) + '...' : escapeHtml(task.notes)) : '-'}
+              </td>
+              <td class="actions-cell">
+                <div class="table-actions">
+                  ${!task.is_completed ? 
+                    '<button class="btn-action btn-complete btn-sm" onclick="toggleTaskComplete(' + task.id + ')" title="완료">✓</button>' :
+                    '<button class="btn-action btn-undo btn-sm" onclick="toggleTaskComplete(' + task.id + ')" title="완료취소">↺</button>'
+                  }
+                  <button class="btn-action btn-edit btn-sm" onclick="openEditModal(' + task.id + ')" title="수정">✎</button>
+                  <button class="btn-action btn-delete btn-sm" onclick="deleteTask(${task.id})" title="삭제">✖</button>
+                </div>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
 }
 
 // 담당자별 뷰 렌더링
@@ -385,6 +459,49 @@ function formatDate(dateString) {
   });
 }
 
+// 보기 전환 기능
+function switchView(viewType, containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  
+  // 현재 탭에 맞는 데이터 가져오기
+  let tasks = [];
+  switch(currentTab) {
+    case 'all':
+      tasks = allTasks;
+      break;
+    case 'today':
+      tasks = getTodayTasks();
+      break;
+    case 'past':
+      tasks = getPastTasks();
+      break;
+    case 'upcoming':
+      tasks = getUpcomingTasks();
+      break;
+    case 'completed':
+      tasks = allTasks.filter(task => task.is_completed);
+      break;
+    case 'urgent':
+      tasks = allTasks.filter(task => task.is_urgent);
+      break;
+  }
+  
+  // 보기 타입에 따라 렌더링
+  renderTaskList(tasks, containerId, viewType);
+  
+  // 버튼 상태 업데이트
+  const viewControls = container.closest('.task-list-container').querySelector('.view-controls');
+  if (viewControls) {
+    viewControls.querySelectorAll('.view-btn').forEach(btn => {
+      btn.classList.remove('active');
+      if (btn.dataset.view === viewType) {
+        btn.classList.add('active');
+      }
+    });
+  }
+}
+
 // 이벤트 리스너 등록
 document.addEventListener('DOMContentLoaded', function() {
   // 로그아웃 버튼
@@ -393,9 +510,28 @@ document.addEventListener('DOMContentLoaded', function() {
   // 과제 등록 폼
   document.getElementById('taskForm').addEventListener('submit', submitTask);
   
+  // 과제 수정 폼
+  document.getElementById('editTaskForm').addEventListener('submit', submitEditTask);
+  
+  // 모달 배경 클릭시 닫기
+  document.getElementById('editModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+      closeEditModal();
+    }
+  });
+  
   // 탭 버튼들
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+  });
+  
+  // 보기 전환 버튼들
+  document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('view-btn')) {
+      const viewType = e.target.dataset.view;
+      const targetId = e.target.dataset.target;
+      switchView(viewType, targetId);
+    }
   });
   
   // 자동 새로고침 (30초마다)
@@ -406,14 +542,15 @@ document.addEventListener('DOMContentLoaded', function() {
   }, 30000);
 });
 
-// 날짜별 필터링 함수들
+// 마감기한 기반 날짜별 필터링 함수들
 function getTodayTasks() {
   const today = new Date();
   const todayStr = today.toISOString().split('T')[0];
   
   return allTasks.filter(task => {
-    const taskDate = new Date(task.created_date).toISOString().split('T')[0];
-    return taskDate === todayStr;
+    if (!task.deadline) return false;
+    const deadlineStr = new Date(task.deadline).toISOString().split('T')[0];
+    return deadlineStr === todayStr;
   });
 }
 
@@ -422,8 +559,10 @@ function getPastTasks() {
   today.setHours(0, 0, 0, 0);
   
   return allTasks.filter(task => {
-    const taskDate = new Date(task.created_date);
-    return taskDate < today;
+    if (!task.deadline) return false;
+    const deadlineDate = new Date(task.deadline);
+    deadlineDate.setHours(0, 0, 0, 0);
+    return deadlineDate < today && !task.is_completed;
   });
 }
 
@@ -431,10 +570,13 @@ function getUpcomingTasks() {
   const today = new Date();
   const sevenDaysLater = new Date();
   sevenDaysLater.setDate(today.getDate() + 7);
+  today.setHours(0, 0, 0, 0);
+  sevenDaysLater.setHours(23, 59, 59, 999);
   
   return allTasks.filter(task => {
-    const taskDate = new Date(task.created_date);
-    return taskDate >= today && taskDate <= sevenDaysLater && !task.is_completed;
+    if (!task.deadline || task.is_completed) return false;
+    const deadlineDate = new Date(task.deadline);
+    return deadlineDate >= today && deadlineDate <= sevenDaysLater;
   });
 }
 
@@ -547,78 +689,6 @@ function getDeadlineStatus(deadline) {
   return '';
 }
 
-// 과제 목록 렌더링 함수 업데이트 (수정 버튼 추가)
-function renderTaskList(tasks, containerId) {
-  const container = document.getElementById(containerId);
-  
-  if (tasks.length === 0) {
-    container.innerHTML = '<p style="text-align: center; color: #666; padding: 2rem;">표시할 과제가 없습니다.</p>';
-    return;
-  }
-  
-  container.innerHTML = tasks.map(task => `
-    <div class="task-card ${task.is_urgent ? 'urgent' : ''} ${task.is_completed ? 'completed' : ''}" data-id="${task.id}">
-      <div class="task-header">
-        <h3 class="task-title">
-          ${escapeHtml(task.task_name)}
-          ${getDateBadge(task.created_date)}
-        </h3>
-        <div class="task-badges">
-          ${task.is_urgent ? '<span class="badge urgent">긴급</span>' : ''}
-          ${task.is_completed ? '<span class="badge completed">완료</span>' : ''}
-        </div>
-      </div>
-      
-      <div class="task-info">
-        <p><strong>담당자:</strong> ${escapeHtml(task.assignee)}</p>
-        <p><strong>생성일:</strong> ${formatDate(task.created_date)}</p>
-        ${task.deadline ? `<p><strong>마감기한:</strong> ${formatDate(task.deadline)} ${getDeadlineStatus(task.deadline)}</p>` : ''}
-        ${task.submission_target ? `<p><strong>제출처:</strong> ${escapeHtml(task.submission_target)}</p>` : ''}
-        ${task.notes ? `<p><strong>비고:</strong> ${escapeHtml(task.notes)}</p>` : ''}
-      </div>
-      
-      <div class="task-actions">
-        ${!task.is_completed ? 
-          '<button class="btn-action btn-complete" onclick="toggleTaskComplete(' + task.id + ')">완료</button>' :
-          '<button class="btn-action btn-undo" onclick="toggleTaskComplete(' + task.id + ')">완료취소</button>'
-        }
-        <button class="btn-action btn-edit" onclick="openEditModal(${task.id})">수정</button>
-        <button class="btn-action btn-delete" onclick="deleteTask(${task.id})">삭제</button>
-      </div>
-    </div>
-  `).join('');
-}
-
-// 이벤트 리스너 등록 (기존 코드 업데이트)
-document.addEventListener('DOMContentLoaded', function() {
-  // 로그아웃 버튼
-  document.getElementById('logoutButton').addEventListener('click', logout);
-  
-  // 과제 등록 폼
-  document.getElementById('taskForm').addEventListener('submit', submitTask);
-  
-  // 과제 수정 폼
-  document.getElementById('editTaskForm').addEventListener('submit', submitEditTask);
-  
-  // 탭 버튼들
-  document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
-  });
-  
-  // 모달 배경 클릭시 닫기
-  document.getElementById('editModal').addEventListener('click', function(e) {
-    if (e.target === this) {
-      closeEditModal();
-    }
-  });
-  
-  // 자동 새로고침 (30초마다)
-  setInterval(async () => {
-    if (currentUser) {
-      await loadDashboard();
-    }
-  }, 30000);
-});
 
 // 달력 관련 변수
 let currentCalendarDate = new Date();
@@ -682,15 +752,26 @@ function createCalendarDate(date, currentMonth) {
       const taskElement = document.createElement('div');
       taskElement.className = 'calendar-task';
       
-      // 과제 상태에 따른 클래스 추가
+      // 과제 상태에 따른 클래스 추가 (우선순위: 완료 > 긴급 > 마감상태)
       if (task.is_completed) {
         taskElement.classList.add('completed');
       } else if (task.is_urgent) {
         taskElement.classList.add('urgent');
       } else {
-        const deadlineStatus = getCalendarDeadlineStatus(task.deadline, date);
-        if (deadlineStatus) {
-          taskElement.classList.add(deadlineStatus);
+        // 마감기한 상태별 색상 분류
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const deadlineDate = new Date(task.deadline);
+        deadlineDate.setHours(0, 0, 0, 0);
+        const currentDateCheck = new Date(date);
+        currentDateCheck.setHours(0, 0, 0, 0);
+        
+        if (deadlineDate < today) {
+          taskElement.classList.add('overdue'); // 지연된 과제
+        } else if (deadlineDate.getTime() === today.getTime()) {
+          taskElement.classList.add('today'); // 오늘 마감
+        } else {
+          taskElement.classList.add('upcoming'); // 예정된 과제
         }
       }
       
@@ -728,7 +809,7 @@ function isDateToday(date) {
          date.getFullYear() === today.getFullYear();
 }
 
-// 달력용 마감기한 상태 반환
+// 달력용 마감기한 상태 반환 (개선된 색상 분류)
 function getCalendarDeadlineStatus(deadline, currentDate) {
   if (!deadline) return '';
   

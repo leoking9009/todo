@@ -119,7 +119,13 @@
     <!-- 전체 과제 목록 -->
     <div id="tab-all" class="tab-content">
       <div class="task-list-container">
-        <h2>전체 과제 목록</h2>
+        <div class="task-list-header">
+          <h2>전체 과제 목록</h2>
+          <div class="view-controls">
+            <button class="view-btn active" data-view="grid" data-target="taskList">📋 카드형</button>
+            <button class="view-btn" data-view="table" data-target="taskList">📊 행형</button>
+          </div>
+        </div>
         <div id="taskList" class="task-grid"></div>
       </div>
     </div>
@@ -136,7 +142,13 @@
     <!-- 완료 과제 -->
     <div id="tab-completed" class="tab-content">
       <div class="task-list-container">
-        <h2>완료된 과제</h2>
+        <div class="task-list-header">
+          <h2>완료된 과제</h2>
+          <div class="view-controls">
+            <button class="view-btn active" data-view="grid" data-target="completedTaskList">📋 카드형</button>
+            <button class="view-btn" data-view="table" data-target="completedTaskList">📊 행형</button>
+          </div>
+        </div>
         <div id="completedTaskList" class="task-grid"></div>
       </div>
     </div>
@@ -144,7 +156,13 @@
     <!-- 오늘 과제 -->
     <div id="tab-today" class="tab-content">
       <div class="task-list-container">
-        <h2>📅 오늘 과제</h2>
+        <div class="task-list-header">
+          <h2>📅 오늘 과제</h2>
+          <div class="view-controls">
+            <button class="view-btn active" data-view="grid" data-target="todayTaskList">📋 카드형</button>
+            <button class="view-btn" data-view="table" data-target="todayTaskList">📊 행형</button>
+          </div>
+        </div>
         <div id="todayTaskList" class="task-grid"></div>
       </div>
     </div>
@@ -152,7 +170,13 @@
     <!-- 지난 과제 -->
     <div id="tab-past" class="tab-content">
       <div class="task-list-container">
-        <h2>📆 지난 과제</h2>
+        <div class="task-list-header">
+          <h2>📆 지난 과제</h2>
+          <div class="view-controls">
+            <button class="view-btn active" data-view="grid" data-target="pastTaskList">📋 카드형</button>
+            <button class="view-btn" data-view="table" data-target="pastTaskList">📊 행형</button>
+          </div>
+        </div>
         <div id="pastTaskList" class="task-grid"></div>
       </div>
     </div>
@@ -160,7 +184,13 @@
     <!-- 7일내 과제 -->
     <div id="tab-upcoming" class="tab-content">
       <div class="task-list-container">
-        <h2>⏰ 7일내 다가올 과제</h2>
+        <div class="task-list-header">
+          <h2>⏰ 7일내 다가올 과제</h2>
+          <div class="view-controls">
+            <button class="view-btn active" data-view="grid" data-target="upcomingTaskList">📋 카드형</button>
+            <button class="view-btn" data-view="table" data-target="upcomingTaskList">📊 행형</button>
+          </div>
+        </div>
         <div id="upcomingTaskList" class="task-grid"></div>
       </div>
     </div>
@@ -168,7 +198,13 @@
     <!-- 긴급 과제 -->
     <div id="tab-urgent" class="tab-content">
       <div class="task-list-container">
-        <h2>긴급 과제</h2>
+        <div class="task-list-header">
+          <h2>긴급 과제</h2>
+          <div class="view-controls">
+            <button class="view-btn active" data-view="grid" data-target="urgentTaskList">📋 카드형</button>
+            <button class="view-btn" data-view="table" data-target="urgentTaskList">📊 행형</button>
+          </div>
+        </div>
         <div id="urgentTaskList" class="task-grid"></div>
       </div>
     </div>
