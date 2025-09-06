@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>업무 관리 시스템 배포 체크리스트</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 2rem;
+        }
+
+        .step {
+            margin-bottom: 2rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 16px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .step:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.1);
+        }
+
+        .step.completed {
+            border-color: #48bb78;
+            background: #f0fff4;
+        }
+
+        .step-header {
+            background: #f8fafc;
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .step.completed .step-header {
+            background: #c6f6d5;
+        }
+
+        .step-number {
+            background: #667eea;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .step.completed .step-number {
+            background: #48bb78;
+        }
+
+        .step-title {
+            flex: 1;
+            margin-left: 1rem;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #2d3748;
+        }
+
+        .step-status {
+            font-size: 1.5rem;
+        }
+
+        .step-content {
+            padding: 1.5rem;
+            display: none;
+        }
+
+        .step.active .step-content {
+            display: block;
+        }
+
+        .checklist {
+            list-style: none;
+            margin: 1rem 0;
+        }
+
+        .checklist li {
+            margin: 0.5rem 0;
+            padding: 0.5rem;
+            background: #f7fafc;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            transition: background 0.3s ease;
+        }
+
+        .checklist li:hover {
+            background: #edf2f7;
+        }
+
+        .checklist input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            margin-right: 12px;
+            cursor: pointer;
+        }
+
+        .code-block {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            margin: 1rem 0;
+            white-space: pre-wrap;
+            font-size: 0.9rem;
+        }
+
+        .link {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .link:hover {
+            text-decoration: underline;
+        }
+
+        .warning {
+            background: #fed7d7;
+            border: 1px solid #feb2b2;
+            color: #c53030;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+
+        .success {
+            background: #c6f6d5;
+            border: 1px solid #9ae6b4;
+            color: #2f855a;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+
+        .info {
+            background: #bee3f8;
+            border: 1px solid #90cdf4;
+            color: #2c5282;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+
+        .progress-bar {
+            background: #e2e8f0;
+            height: 8px;
+            border-radius: 4px;
+            margin: 1rem 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, #48bb78, #38a169);
+            height: 100%;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        .progress-text {
+            text-align: center;
+            margin: 0.5rem 0;
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        .footer {
+            background: #f8fafc;
+            padding: 2rem;
+            text-align: center;
+            color: #666;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 10px;
+            }
+            
+            .header {
+                padding: 1.5rem;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .content {
+                padding: 1rem;
+            }
+            
+            .step-header {
+                padding: 1rem;
+            }
+            
+            .step-title {
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 업무 관리 시스템</h1>
+            <p>배포 및 설정 체크리스트</p>
+        </div>
+
+        <div class="content">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text" id="progressText">진행률: 0% (0/6 단계 완료)</div>
+
+            <!-- 1단계: Neon PostgreSQL 설정 -->
+            <div class="step" id="step1">
+                <div class="step-header" onclick="toggleStep('step1')">
+                    <div class="step-number">1</div>
+                    <div class="step-title">Neon PostgreSQL 데이터베이스 설정</div>
+                    <div class="step-status">📝</div>
+                </div>
+                <div class="step-content">
+                    <p><strong>🎯 목표:</strong> 클라우드 PostgreSQL 데이터베이스 생성 및 연결 정보 획득</p>
+                    
+                    <div class="checklist">
+                        <li><input type="checkbox" onchange="updateProgress()"> <a href="https://console.neon.tech" target="_blank" class="link">console.neon.tech</a> 접속</li>
+                        <li><input type="checkbox" onchange="updateProgress()"> 구글 또는 GitHub 계정으로 회원가입/로그인</li>
+                        <li><input type="checkbox" onchange="updateProgress()"> "Create Project" 클릭</li>
+                        <li><input type="checkbox" onchange="updateProgress()"> 프로젝트명: <code>business-task-manager</code> 입력</li>
+                        <li><input type="checkbox" onchange="updateProgress()"> 지역: <code>Asia Pacific (Singapore)</code> 선택</li>
+                        <li><input type="checkbox" onchange="updateProgress()"> 프로젝트 생성 완료</li>
+                        <li><input type="checkbox" onchange="updateProgress()"> <strong>Connection String</strong> 복사하여 메모장에 저장</li>
+                    </div>
+
+                    <div class="info">
+                        <strong>💡 Connection String 형태:</strong><br>
+                        <code>postgresql://username:password@ep-xxx-xxx.region.aws.neon.tech/dbname?sslmode=require</code>
+                    </div>
+
+                    <div class="warning">
+                        <strong>⚠️ 주의:</strong> Connection String은 비밀번호가 포함되어 있으니 안전하게 보관하세요.
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2단계: Netlify 배포 -->
+            <div class="step" id="step2">
+                <div class="step-header" onclick="toggleStep('step2')">
+                    <div class="step-number">2</div>
+                    <div class="step-title">Netlify에 프로젝트 배포</div>
+                    <div class="step-status">🌐</div>
+                </div>
+                <div class="step-content">
+                    <p><strong>🎯 목표:</strong> GitHub 저장소를 Netlify에 연결하여 자동 배포 설정</p>
+                    
+                    <div class="checklist">
+                        <li><input type="checkbox" onchange="updateProgress()"> <a href="https://netlify.com" target="_blank" class="link">netlify.com</a> 접속 후 로그인</li>
+                        <li><input type="checkbox" onchange="updateProgress()"> "New site from Git" 버튼 클릭</li>
+                        <li><input type="checkbox" onchange="updateProgress()"> GitHub 계정 연결 (처음이면 권한 승인)</li>
+                        <li><input type="checkbox" onchange="updateProgress()"> 저장소 선택: <code>leoking9009/todo</code></li>
+                        <li><input type="checkbox" onchange="updateProgress()"> 브랜치: <code>main</code> 선택</li>
+                        <li><input type="checkbox" onchange="updateProgress()"> Build settings 확인 (기본값 유지)</li>
+                        <li><input type="checkbox" onchange="updateProgress()"> "Deploy site" 클릭하여 첫 배포 시작</li>
+                        <li><input type="checkbox" onchange="updateProgress()"> 배포 완료 대기 (3-5분 소요)</li>
+                    </div>
+
+                    <div class="info">
+                        <strong>📋 Build Settings:</strong><br>
+                        • Build command: (비워두기)<br>
+                        • Publish directory: <code>.</code><br>
+                        • Functions directory: <code>netlify/functions</code>
+                    </div>
+
+                    <div class="success">
+                        <strong>✅ 배포 성공 시:</strong> Netlify가 자동으로 생성한 URL을 메모하세요 (예: https://amazing-name-123456.netlify.app)
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3단계: 환경변수 설정 -->
+            <div class="step" id="step3">
+                <div class="step-header" onclick="toggleStep('step3')">
+                    <div class="step-number">3</div>
+                    <div class="step-title">Netlify 환경변수 설정</div>
+                    <div class="step-status">⚙️</div>
+                </div>
+                <div class="step-content">
+                    <p><strong>🎯 목표:</strong> 데이터베이스 연결 정보를 Netlify에 안전하게 저장</p>
+                    
+                    <div class="checklist">
+                        <li><input type="checkbox" onchange="updateProgress()"> Netlify Dashboard에서 배포된 사이트 클릭</li>
+                        <li><input type="checkbox" onchange="updateProgress()"> "Site settings" 메뉴 클릭</li>
+                        <li><input type="checkbox" onchange="updateProgress()"> 왼쪽 메뉴에서 "Environment variables" 클릭</li>
+                        <li><input type="checkbox" onchange="updateProgress()"> "Add a variable" 버튼 클릭</li>
+                        <li><input type="checkbox" onchange="updateProgress()"> Key: <code>DATABASE_URL</code> 입력</li>
+                        <li><input type="checkbox" onchange="updateProgress()"> Value: 1단계에서 복사한 Connection String 붙여넣기</li>
+                        <li><input type="checkbox" onchange="updateProgress()"> "Create variable" 클릭</li>
+                        <li><input type="checkbox" onchange="updateProgress()"> "Deploys" → "Trigger deploy" → "Deploy site" 클릭하여 재배포</li>
+                    </div>
+
+                    <div class="warning">
+                        <strong>🔒 보안 주의:</strong> DATABASE_URL에는 비밀번호가 포함되어 있으므로 절대 공개하지 마세요.
+                    </div>
+
+                    <div class="info">
+                        <strong>💡 재배포 이유:</strong> 환경변수 추가 후에는 반드시 재배포해야 Functions에서 변수를 읽을 수 있습니다.
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4단계: 구글 OAuth 설정 -->
+            <div class="step" id="step4">
+                <div class="step-header" onclick="toggleStep('step4')">
+                    <div class="step-number">4</div>
+                    <div class="step-title">구글 OAuth 인증 설정</div>
+                    <div class="step-status">🔐</div>
+                </div>
+                <div class="step-content">
+                    <p><strong>🎯 목표:</strong> 구글 로그인을 위한 OAuth 클라이언트 설정</p>
+                    
+                    <div class="checklist">
+                        <li><input type="checkbox" onchange="updateProgress()"> <a href="https://console.cloud.google.com" target="_blank" class="link">console.cloud.google.com</a> 접속</li>
+                        <li><input type="checkbox" onchange="updateProgress()"> 새 프로젝트 생성: <code>business-task-manager</code></li>
+                        <li><input type="checkbox" onchange="updateProgress()"> "APIs & Services" → "Credentials" 메뉴로 이동</li>
+                        <li><input type="checkbox" onchange="updateProgress()"> "Create Credentials" → "OAuth 2.0 Client IDs" 선택</li>
+                        <li><input type="checkbox" onchange="updateProgress()"> Application type: <code>Web application</code> 선택</li>
+                        <li><input type="checkbox" onchange="updateProgress()"> Name: <code>Task Manager Web Client</code> 입력</li>
+                        <li><input type="checkbox" onchange="updateProgress()"> "Authorized JavaScript origins"에 Netlify URL 추가</li>
+                        <li><input type="checkbox" onchange="updateProgress()"> Client ID 복사하여 메모</li>
+                        <li><input type="checkbox" onchange="updateProgress()"> GitHub에서 index.html 파일 수정</li>
+                        <li><input type="checkbox" onchange="updateProgress()"> <code>data-client_id</code> 값을 새 Client ID로 변경</li>
+                        <li><input type="checkbox" onchange="updateProgress()"> 변경사항 커밋 및 푸시 (자동 재배포됨)</li>
+                    </div>
+
+                    <div class="code-block">수정할 부분 (index.html):
+&lt;div id="g_id_onload"
+     data-client_id="여기에-새로운-클라이언트-ID-입력"
+     data-callback="handleCredentialResponse"&gt;</div>
+
+                    <div class="info">
+                        <strong>📋 Authorized JavaScript origins 예시:</strong><br>
+                        <code>https://your-site-name.netlify.app</code>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5단계: 데이터베이스 테이블 확인 -->
+            <div class="step" id="step5">
+                <div class="step-header" onclick="toggleStep('step5')">
+                    <div class="step-number">5</div>
+                    <div class="step-title">데이터베이스 테이블 생성 확인</div>
+                    <div class="step-status">🗄️</div>
+                </div>
+                <div class="step-content">
+                    <p><strong>🎯 목표:</strong> 업무 데이터를 저장할 테이블이 정상적으로 생성되었는지 확인</p>
+                    
+                    <div class="checklist">
+                        <li><input type="checkbox" onchange="updateProgress()"> Netlify에서 배포 완료 확인</li>
+                        <li><input type="checkbox" onchange="updateProgress()"> 배포된 사이트 URL로 접속 시도</li>
+                        <li><input type="checkbox" onchange="updateProgress()"> 구글 로그인 테스트</li>
+                        <li><input type="checkbox" onchange="updateProgress()"> 로그인 성공 시 자동으로 테이블 생성됨</li>
+                        <li><input type="checkbox" onchange="updateProgress()"> (선택) Neon 콘솔에서 SQL Editor로 테이블 확인</li>
+                    </div>
+
+                    <div class="info">
+                        <strong>🤖 자동 테이블 생성:</strong> 첫 번째 로그인 시 Netlify Functions가 자동으로 필요한 테이블들을 생성합니다.
+                    </div>
+
+                    <div class="code-block">수동 테이블 생성 (필요시):
+CREATE TABLE IF NOT EXISTS tasks (
+  id SERIAL PRIMARY KEY,
+  assignee VARCHAR(100) NOT NULL,
+  task_name VARCHAR(200) NOT NULL,
+  is_urgent BOOLEAN DEFAULT FALSE,
+  created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  is_completed BOOLEAN DEFAULT FALSE,
+  submission_target VARCHAR(100),
+  notes TEXT,
+  user_id VARCHAR(100) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);</div>
+                </div>
+            </div>
+
+            <!-- 6단계: 최종 테스트 -->
+            <div class="step" id="step6">
+                <div class="step-header" onclick="toggleStep('step6')">
+                    <div class="step-number">6</div>
+                    <div class="step-title">최종 테스트 및 사용 시작</div>
+                    <div class="step-status">🎉</div>
+                </div>
+                <div class="step-content">
+                    <p><strong>🎯 목표:</strong> 모든 기능이 정상 작동하는지 확인하고 실제 업무에 활용 시작</p>
+                    
+                    <div class="checklist">
+                        <li><input type="checkbox" onchange="updateProgress()"> 배포된 사이트 접속</li>
+                        <li><input type="checkbox" onchange="updateProgress()"> 구글 계정으로 로그인</li>
+                        <li><input type="checkbox" onchange="updateProgress()"> 테스트 과제 등록 (담당자, 과제명, 긴급여부 등)</li>
+                        <li><input type="checkbox" onchange="updateProgress()"> 대시보드에서 통계 확인 (전체, 완료, 진행중, 긴급)</li>
+                        <li><input type="checkbox" onchange="updateProgress()"> "전체 과제" 탭에서 과제 목록 확인</li>
+                        <li><input type="checkbox" onchange="updateProgress()"> 과제 완료 체크 기능 테스트</li>
+                        <li><input type="checkbox" onchange="updateProgress()"> "담당자별" 탭에서 담당자 통계 확인</li>
+                        <li><input type="checkbox" onchange="updateProgress()"> "완료 과제", "긴급 과제" 필터링 테스트</li>
+                        <li><input type="checkbox" onchange="updateProgress()"> 과제 삭제 기능 테스트</li>
+                        <li><input type="checkbox" onchange="updateProgress()"> 모바일/태블릿에서 반응형 확인</li>
+                    </div>
+
+                    <div class="success">
+                        <strong>🎊 축하합니다!</strong> 업무 관리 시스템이 성공적으로 배포되었습니다!
+                    </div>
+
+                    <div class="info">
+                        <strong>📱 주요 기능 요약:</strong><br>
+                        • 구글 로그인으로 간편 인증<br>
+                        • 담당자, 과제명, 긴급여부, 제출처, 비고 등 상세 정보 입력<br>
+                        • 실시간 통계 대시보드 (전광판)<br>
+                        • 담당자별/완료/긴급 과제 관리<br>
+                        • 모바일 친화적 반응형 디자인<br>
+                        • 30초마다 자동 새로고침
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="footer">
+            <p>💡 문제가 발생하면 Netlify Function Logs나 브라우저 개발자 도구의 Console을 확인해보세요.</p>
+            <p>📧 도움이 필요하시면 언제든 문의하세요!</p>
+        </div>
+    </div>
+
+    <script>
+        // 단계별 토글 기능
+        function toggleStep(stepId) {
+            const step = document.getElementById(stepId);
+            step.classList.toggle('active');
+        }
+
+        // 진행률 업데이트
+        function updateProgress() {
+            const totalSteps = 6;
+            const totalTasks = document.querySelectorAll('input[type="checkbox"]').length;
+            const completedTasks = document.querySelectorAll('input[type="checkbox"]:checked').length;
+            
+            // 체크박스 기반 진행률
+            const checkboxProgress = Math.round((completedTasks / totalTasks) * 100);
+            
+            // 각 단계별 완료 상태 확인
+            let completedSteps = 0;
+            for (let i = 1; i <= totalSteps; i++) {
+                const stepCheckboxes = document.querySelectorAll(`#step${i} input[type="checkbox"]`);
+                const stepCompletedCheckboxes = document.querySelectorAll(`#step${i} input[type="checkbox"]:checked`);
+                
+                if (stepCheckboxes.length > 0 && stepCheckboxes.length === stepCompletedCheckboxes.length) {
+                    document.getElementById(`step${i}`).classList.add('completed');
+                    completedSteps++;
+                } else {
+                    document.getElementById(`step${i}`).classList.remove('completed');
+                }
+            }
+            
+            // 진행률 바 업데이트
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+            
+            progressFill.style.width = checkboxProgress + '%';
+            progressText.textContent = `진행률: ${checkboxProgress}% (${completedSteps}/${totalSteps} 단계 완료)`;
+            
+            // 완료 시 축하 메시지
+            if (completedSteps === totalSteps) {
+                setTimeout(() => {
+                    alert('🎉 모든 설정이 완료되었습니다! 업무 관리 시스템을 사용해보세요!');
+                }, 500);
+            }
+        }
+
+        // 페이지 로드시 첫 번째 단계 열기
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('step1').classList.add('active');
+        });
+
+        // 로컬 스토리지에 체크 상태 저장/복원
+        document.addEventListener('DOMContentLoaded', function() {
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            
+            // 저장된 상태 복원
+            checkboxes.forEach((checkbox, index) => {
+                const saved = localStorage.getItem(`checkbox_${index}`);
+                if (saved === 'true') {
+                    checkbox.checked = true;
+                }
+            });
+            
+            // 상태 변경 시 저장
+            checkboxes.forEach((checkbox, index) => {
+                checkbox.addEventListener('change', function() {
+                    localStorage.setItem(`checkbox_${index}`, checkbox.checked);
+                });
+            });
+            
+            // 초기 진행률 계산
+            updateProgress();
+        });
+    </script>
+</body>
+</html>

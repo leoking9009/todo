@@ -613,3 +613,443 @@ body {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
+
+/* 모달 스타일 */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 16px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.modal-header h2 {
+  margin: 0;
+  color: #2d3748;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.close-modal {
+  font-size: 32px;
+  color: #666;
+  cursor: pointer;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.close-modal:hover {
+  color: #333;
+}
+
+.modal .task-form {
+  padding: 2rem;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.btn-cancel {
+  background: #e2e8f0;
+  color: #4a5568;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s;
+  flex: 1;
+}
+
+.btn-cancel:hover {
+  background: #cbd5e0;
+}
+
+/* 과제 카드에 수정 버튼 스타일 */
+.btn-edit {
+  background: #ed8936;
+  color: white;
+}
+
+.btn-edit:hover {
+  background: #dd6b20;
+}
+
+/* 날짜별 필터링을 위한 추가 스타일 */
+.date-badge {
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-left: 8px;
+}
+
+.date-badge.today {
+  background: #bee3f8;
+  color: #2c5282;
+}
+
+.date-badge.past {
+  background: #fbb6ce;
+  color: #97266d;
+}
+
+.date-badge.upcoming {
+  background: #c6f6d5;
+  color: #2f855a;
+}
+
+/* 반응형 모달 */
+@media (max-width: 768px) {
+  .modal-content {
+    width: 95%;
+    margin: 20px;
+  }
+  
+  .modal-header {
+    padding: 1rem;
+  }
+  
+  .modal .task-form {
+    padding: 1rem;
+  }
+  
+  .modal-actions {
+    flex-direction: column;
+  }
+}
+
+/* 마감기한 상태 스타일 */
+.deadline-status {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-left: 8px;
+}
+
+.deadline-status.overdue {
+  background-color: #ffe6e6;
+  color: #dc3545;
+  border: 1px solid #f5c6cb;
+}
+
+.deadline-status.today {
+  background-color: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeaa7;
+  animation: pulse 2s infinite;
+}
+
+.deadline-status.tomorrow {
+  background-color: #e1f5fe;
+  color: #0277bd;
+  border: 1px solid #b3e5fc;
+}
+
+.deadline-status.soon {
+  background-color: #f3e5f5;
+  color: #7b1fa2;
+  border: 1px solid #ce93d8;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* 달력 스타일 */
+.calendar-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding: 0 1rem;
+}
+
+.calendar-nav-btn {
+  background: #667eea;
+  color: white;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.calendar-nav-btn:hover {
+  background: #5a6fd8;
+  transform: scale(1.1);
+}
+
+.calendar-legend {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.legend-dot.overdue {
+  background-color: #dc3545;
+}
+
+.legend-dot.today {
+  background-color: #ffc107;
+  animation: pulse 2s infinite;
+}
+
+.legend-dot.upcoming {
+  background-color: #28a745;
+}
+
+.legend-dot.completed {
+  background-color: #6c757d;
+}
+
+.calendar-grid {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  background: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.calendar-weekday {
+  padding: 1rem;
+  text-align: center;
+  font-weight: 600;
+  color: #495057;
+  border-right: 1px solid #e9ecef;
+}
+
+.calendar-weekday:last-child {
+  border-right: none;
+}
+
+.calendar-dates {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+
+.calendar-date {
+  min-height: 120px;
+  border-right: 1px solid #e9ecef;
+  border-bottom: 1px solid #e9ecef;
+  padding: 0.5rem;
+  position: relative;
+  background: white;
+  transition: background-color 0.2s ease;
+}
+
+.calendar-date:hover {
+  background-color: #f8f9fa;
+}
+
+.calendar-date:nth-child(7n) {
+  border-right: none;
+}
+
+.calendar-date.other-month {
+  background-color: #f8f9fa;
+  color: #6c757d;
+}
+
+.calendar-date.today {
+  background-color: #fff3cd;
+  border: 2px solid #ffc107;
+}
+
+.date-number {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+  text-align: right;
+  color: #495057;
+}
+
+.calendar-date.other-month .date-number {
+  color: #adb5bd;
+}
+
+.calendar-tasks {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 85px;
+  overflow-y: auto;
+}
+
+.calendar-task {
+  font-size: 0.75rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border-left: 3px solid transparent;
+}
+
+.calendar-task:hover {
+  transform: translateX(2px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.calendar-task.completed {
+  background-color: #d4edda;
+  color: #155724;
+  border-left-color: #28a745;
+  text-decoration: line-through;
+}
+
+.calendar-task.urgent {
+  background-color: #f8d7da;
+  color: #721c24;
+  border-left-color: #dc3545;
+  font-weight: 600;
+}
+
+.calendar-task.overdue {
+  background-color: #f5c6cb;
+  color: #721c24;
+  border-left-color: #dc3545;
+}
+
+.calendar-task.today {
+  background-color: #fff3cd;
+  color: #856404;
+  border-left-color: #ffc107;
+  animation: pulse 2s infinite;
+}
+
+.calendar-task.upcoming {
+  background-color: #d1ecf1;
+  color: #0c5460;
+  border-left-color: #17a2b8;
+}
+
+/* 달력 반응형 디자인 */
+@media (max-width: 768px) {
+  .calendar-container {
+    padding: 0.5rem;
+  }
+  
+  .calendar-header h2 {
+    font-size: 1.2rem;
+  }
+  
+  .calendar-nav-btn {
+    width: 35px;
+    height: 35px;
+    font-size: 1.2rem;
+  }
+  
+  .calendar-legend {
+    gap: 1rem;
+  }
+  
+  .calendar-weekday {
+    padding: 0.75rem 0.5rem;
+    font-size: 0.9rem;
+  }
+  
+  .calendar-date {
+    min-height: 100px;
+    padding: 0.25rem;
+  }
+  
+  .calendar-task {
+    font-size: 0.7rem;
+    padding: 1px 4px;
+  }
+}
+
+@media (max-width: 480px) {
+  .calendar-date {
+    min-height: 80px;
+  }
+  
+  .calendar-weekday {
+    padding: 0.5rem 0.25rem;
+    font-size: 0.8rem;
+  }
+  
+  .calendar-task {
+    font-size: 0.65rem;
+  }
+  
+  .calendar-legend {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+  }
+}

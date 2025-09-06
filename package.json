@@ -4,14 +4,16 @@
   "description": "Business task sharing application with Google OAuth and PostgreSQL",
   "main": "index.html",
   "scripts": {
-    "dev": "npx http-server . -p 3000",
+    "dev": "netlify dev",
+    "dev-simple": "npx http-server . -p 3000",
     "build": "echo 'Static build - no build process required'"
   },
   "dependencies": {
     "@netlify/functions": "^2.0.0",
-    "pg": "^8.11.3",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.2",
     "jsonwebtoken": "^9.0.2",
-    "cors": "^2.8.5"
+    "pg": "^8.11.3"
   },
   "devDependencies": {
     "http-server": "^14.1.1"
