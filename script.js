@@ -2,6 +2,7 @@
 let currentUser = null;
 let allTasks = [];
 let currentTab = 'add';
+let currentAssigneeFilter = null; // 현재 선택된 담당자
 
 // API 베이스 URL (Netlify Functions)
 const API_BASE = '/.netlify/functions';
@@ -167,7 +168,7 @@ function renderTaskGrid(tasks, containerId) {
           '<button class="btn-action btn-complete" onclick="toggleTaskComplete(' + task.id + ')">완료</button>' :
           '<button class="btn-action btn-undo" onclick="toggleTaskComplete(' + task.id + ')">완료취소</button>'
         }
-        <button class="btn-action btn-edit" onclick="openEditModal(' + task.id + ')">수정</button>
+        <button class="btn-action btn-edit" data-task-id="${task.id}">수정</button>
         <button class="btn-action btn-delete" onclick="deleteTask(${task.id})">삭제</button>
       </div>
     </div>
@@ -222,7 +223,7 @@ function renderTaskTable(tasks, containerId) {
                     '<button class="btn-action btn-complete btn-sm" onclick="toggleTaskComplete(' + task.id + ')" title="완료">✓</button>' :
                     '<button class="btn-action btn-undo btn-sm" onclick="toggleTaskComplete(' + task.id + ')" title="완료취소">↺</button>'
                   }
-                  <button class="btn-action btn-edit btn-sm" onclick="openEditModal(' + task.id + ')" title="수정">✎</button>
+                  <button class="btn-action btn-edit btn-sm" data-task-id="${task.id}" title="수정">✎</button>
                   <button class="btn-action btn-delete btn-sm" onclick="deleteTask(${task.id})" title="삭제">✖</button>
                 </div>
               </td>
@@ -236,6 +237,7 @@ function renderTaskTable(tasks, containerId) {
 
 // 담당자별 뷰 렌더링
 function renderAssigneeView() {
+  currentAssigneeFilter = null; // 담당자 필터 초기화
   const statsContainer = document.getElementById('assigneeStats');
   
   // 담당자별 통계 계산
@@ -288,39 +290,25 @@ function renderAssigneeView() {
 
 // 담당자 세부사항 표시
 function showAssigneeDetails(assigneeName) {
+  currentAssigneeFilter = assigneeName; // 현재 담당자 저장
   const assigneeTasks = allTasks.filter(task => task.assignee === assigneeName);
   const container = document.getElementById('assigneeDetails');
   
   container.innerHTML = `
-    <h3>${escapeHtml(assigneeName)}의 과제 목록</h3>
-    <div class="task-grid">
-      ${assigneeTasks.map(task => `
-        <div class="task-card ${task.is_urgent ? 'urgent' : ''} ${task.is_completed ? 'completed' : ''}" data-id="${task.id}">
-          <div class="task-header">
-            <h4 class="task-title">${escapeHtml(task.task_name)}</h4>
-            <div class="task-badges">
-              ${task.is_urgent ? '<span class="badge urgent">긴급</span>' : ''}
-              ${task.is_completed ? '<span class="badge completed">완료</span>' : ''}
-            </div>
-          </div>
-          
-          <div class="task-info">
-            <p><strong>생성일:</strong> ${formatDate(task.created_date)}</p>
-            ${task.submission_target ? `<p><strong>제출처:</strong> ${escapeHtml(task.submission_target)}</p>` : ''}
-            ${task.notes ? `<p><strong>비고:</strong> ${escapeHtml(task.notes)}</p>` : ''}
-          </div>
-          
-          <div class="task-actions">
-            ${!task.is_completed ? 
-              '<button class="btn-action btn-complete" onclick="toggleTaskComplete(' + task.id + ')">완료</button>' :
-              '<button class="btn-action btn-undo" onclick="toggleTaskComplete(' + task.id + ')">완료취소</button>'
-            }
-            <button class="btn-action btn-delete" onclick="deleteTask(${task.id})">삭제</button>
-          </div>
+    <div class="task-list-container">
+      <div class="task-list-header">
+        <h3>${escapeHtml(assigneeName)}의 과제 목록</h3>
+        <div class="view-controls">
+          <button class="view-btn active" data-view="grid" data-target="assigneeTaskList">📋 카드형</button>
+          <button class="view-btn" data-view="table" data-target="assigneeTaskList">📊 행형</button>
         </div>
-      `).join('')}
+      </div>
+      <div id="assigneeTaskList" class="task-grid"></div>
     </div>
   `;
+  
+  // 담당자별 과제 목록을 렌더링
+  renderTaskList(assigneeTasks, 'assigneeTaskList', 'grid');
 }
 
 // 새 과제 등록
@@ -466,25 +454,31 @@ function switchView(viewType, containerId) {
   
   // 현재 탭에 맞는 데이터 가져오기
   let tasks = [];
-  switch(currentTab) {
-    case 'all':
-      tasks = allTasks;
-      break;
-    case 'today':
-      tasks = getTodayTasks();
-      break;
-    case 'past':
-      tasks = getPastTasks();
-      break;
-    case 'upcoming':
-      tasks = getUpcomingTasks();
-      break;
-    case 'completed':
-      tasks = allTasks.filter(task => task.is_completed);
-      break;
-    case 'urgent':
-      tasks = allTasks.filter(task => task.is_urgent);
-      break;
+  
+  // 담당자별 항목인 경우 특별 처리
+  if (containerId === 'assigneeTaskList' && currentAssigneeFilter) {
+    tasks = allTasks.filter(task => task.assignee === currentAssigneeFilter);
+  } else {
+    switch(currentTab) {
+      case 'all':
+        tasks = allTasks;
+        break;
+      case 'today':
+        tasks = getTodayTasks();
+        break;
+      case 'past':
+        tasks = getPastTasks();
+        break;
+      case 'upcoming':
+        tasks = getUpcomingTasks();
+        break;
+      case 'completed':
+        tasks = allTasks.filter(task => task.is_completed);
+        break;
+      case 'urgent':
+        tasks = allTasks.filter(task => task.is_urgent);
+        break;
+    }
   }
   
   // 보기 타입에 따라 렌더링
@@ -504,6 +498,14 @@ function switchView(viewType, containerId) {
 
 // 이벤트 리스너 등록
 document.addEventListener('DOMContentLoaded', function() {
+  // 새 과제 등록 시 마감기한 기본값을 오늘로 설정
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('deadline').value = today;
+  } catch (e) {
+    console.error("마감기한 기본값 설정 오류:", e);
+  }
+
   // 로그아웃 버튼
   document.getElementById('logoutButton').addEventListener('click', logout);
   
@@ -532,6 +534,16 @@ document.addEventListener('DOMContentLoaded', function() {
       const targetId = e.target.dataset.target;
       switchView(viewType, targetId);
     }
+    
+    // 수정 버튼 클릭 처리 (이벤트 위임)
+    if (e.target.classList.contains('btn-edit')) {
+      console.log('수정 버튼 클릭됨:', e.target);
+      const taskId = e.target.dataset.taskId;
+      console.log('Task ID:', taskId);
+      if (taskId) {
+        openEditModal(parseInt(taskId));
+      }
+    }
   });
   
   // 자동 새로고침 (30초마다)
@@ -540,6 +552,10 @@ document.addEventListener('DOMContentLoaded', function() {
       await loadDashboard();
     }
   }, 30000);
+
+  // 달력 네비게이션
+  document.getElementById('prevMonth')?.addEventListener('click', goToPreviousMonth);
+  document.getElementById('nextMonth')?.addEventListener('click', goToNextMonth);
 });
 
 // 마감기한 기반 날짜별 필터링 함수들
@@ -582,15 +598,20 @@ function getUpcomingTasks() {
 
 // 과제 수정 관련 함수들
 function openEditModal(taskId) {
+  console.log('openEditModal 호출됨, taskId:', taskId);
   const task = allTasks.find(t => t.id === taskId);
-  if (!task) return;
+  if (!task) {
+    console.log('과제를 찾을 수 없습니다:', taskId);
+    return;
+  }
+  console.log('찾은 과제:', task);
   
   // 모달에 현재 값들 설정
   document.getElementById('editTaskId').value = task.id;
   document.getElementById('editAssignee').value = task.assignee;
   document.getElementById('editTaskName').value = task.task_name;
   document.getElementById('editSubmissionTarget').value = task.submission_target || '';
-  document.getElementById('editDeadline').value = task.deadline || '';
+  document.getElementById('editDeadline').value = task.deadline ? new Date(task.deadline).toISOString().split('T')[0] : '';
   document.getElementById('editIsUrgent').checked = task.is_urgent;
   document.getElementById('editNotes').value = task.notes || '';
   
@@ -852,14 +873,6 @@ function goToNextMonth() {
   renderCalendar();
 }
 
-// 달력 네비게이션 이벤트 리스너 추가
-document.addEventListener('DOMContentLoaded', function() {
-  // 기존 이벤트 리스너들...
-  
-  // 달력 네비게이션
-  document.getElementById('prevMonth')?.addEventListener('click', goToPreviousMonth);
-  document.getElementById('nextMonth')?.addEventListener('click', goToNextMonth);
-});
 
 // 전역 함수로 노출 (HTML에서 사용)
 window.handleCredentialResponse = handleCredentialResponse;
