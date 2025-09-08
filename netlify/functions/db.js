@@ -23,6 +23,7 @@ const createTables = async () => {
         is_completed BOOLEAN DEFAULT FALSE,
         submission_target VARCHAR(100),
         notes TEXT,
+        deadline DATE,
         user_id VARCHAR(100) NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
