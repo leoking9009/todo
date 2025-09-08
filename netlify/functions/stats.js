@@ -1,4 +1,4 @@
-const { pool } = require('./db');
+const { pool, createTables } = require('./db');
 
 exports.handler = async (event, context) => {
   const headers = {
@@ -23,7 +23,12 @@ exports.handler = async (event, context) => {
     };
   }
 
-  const client = await pool.connect();
+  let client;
+  try {
+    // 데이터베이스 테이블 초기화
+    await createTables();
+    
+    client = await pool.connect();
 
   try {
     // 전체 통계
@@ -61,9 +66,24 @@ exports.handler = async (event, context) => {
     return {
       statusCode: 500,
       headers,
-      body: JSON.stringify({ error: 'Internal server error' })
+      body: JSON.stringify({ 
+        error: 'Internal server error',
+        details: error.message 
+      })
     };
   } finally {
-    client.release();
+    if (client) {
+      client.release();
+    }
+  } catch (error) {
+    console.error('Database connection error:', error);
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ 
+        error: 'Database connection failed',
+        details: error.message
+      })
+    };
   }
 };
