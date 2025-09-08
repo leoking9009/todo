@@ -2,7 +2,7 @@ const { Pool } = require('pg');
 
 // Neon PostgreSQL 연결 설정
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: process.env.DATABASE_URL || process.env.NETLIFY_DATABASE_URL,
   ssl: {
     rejectUnauthorized: false
   }
