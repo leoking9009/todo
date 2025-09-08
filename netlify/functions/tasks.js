@@ -21,8 +21,6 @@ exports.handler = async (event, context) => {
     await createTables();
     
     client = await pool.connect();
-
-  try {
     switch (event.httpMethod) {
       case 'GET':
         const { rows } = await client.query(`
@@ -113,15 +111,5 @@ exports.handler = async (event, context) => {
     if (client) {
       client.release();
     }
-  } catch (error) {
-    console.error('Database connection error:', error);
-    return {
-      statusCode: 500,
-      headers,
-      body: JSON.stringify({ 
-        error: 'Database connection failed',
-        details: error.message
-      })
-    };
   }
 };

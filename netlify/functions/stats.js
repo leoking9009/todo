@@ -30,7 +30,6 @@ exports.handler = async (event, context) => {
     
     client = await pool.connect();
 
-  try {
     // 전체 통계
     const totalTasks = await client.query('SELECT COUNT(*) as count FROM tasks');
     const completedTasks = await client.query('SELECT COUNT(*) as count FROM tasks WHERE is_completed = true');
@@ -62,7 +61,7 @@ exports.handler = async (event, context) => {
       body: JSON.stringify(stats)
     };
   } catch (error) {
-    console.error('Stats error:', error);
+    console.error('Database error:', error);
     return {
       statusCode: 500,
       headers,
@@ -75,15 +74,5 @@ exports.handler = async (event, context) => {
     if (client) {
       client.release();
     }
-  } catch (error) {
-    console.error('Database connection error:', error);
-    return {
-      statusCode: 500,
-      headers,
-      body: JSON.stringify({ 
-        error: 'Database connection failed',
-        details: error.message
-      })
-    };
   }
 };
