@@ -1324,3 +1324,216 @@ body {
     display: none;
   }
 }
+
+/* 담당자별 상세 보기 스타일 */
+.assignee-details-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.assignee-details-header h3 {
+  color: #333;
+  font-size: 1.5rem;
+  margin: 0;
+}
+
+.view-toggle {
+  display: flex;
+  background: #f1f5f9;
+  border-radius: 8px;
+  padding: 4px;
+  gap: 4px;
+}
+
+.view-btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #64748b;
+  transition: all 0.2s ease;
+}
+
+.view-btn.active {
+  background: white;
+  color: #667eea;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.view-btn:hover:not(.active) {
+  color: #667eea;
+  background: rgba(102, 126, 234, 0.1);
+}
+
+/* 담당자별 테이블 보기 스타일 */
+.table-container {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.table-container .task-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.table-container .task-table th {
+  background: #f8fafc;
+  padding: 1rem 0.75rem;
+  text-align: left;
+  font-weight: 600;
+  color: #374151;
+  border-bottom: 2px solid #e5e7eb;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.table-container .task-table td {
+  padding: 1rem 0.75rem;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: top;
+}
+
+.table-container .task-table tr:hover {
+  background: #f8fafc;
+}
+
+.table-container .task-table tr.completed {
+  opacity: 0.7;
+  background: rgba(34, 197, 94, 0.05);
+}
+
+.table-container .task-name-cell {
+  font-weight: 600;
+  color: #1f2937;
+  max-width: 200px;
+}
+
+.table-container .task-notes {
+  font-size: 0.8rem;
+  color: #6b7280;
+  margin-top: 0.25rem;
+  font-style: italic;
+}
+
+.table-container .deadline-cell {
+  white-space: nowrap;
+}
+
+.table-container .status-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.table-container .status-badge.completed {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.table-container .status-badge.pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.table-container .urgent-badge {
+  padding: 0.25rem 0.5rem;
+  background: #fecaca;
+  color: #991b1b;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.table-container .action-buttons {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.table-container .btn-sm {
+  padding: 0.375rem 0.5rem;
+  font-size: 0.8rem;
+  min-width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 담당자별 카드 보기에서 수정 버튼 추가 스타일 */
+#assigneeTasksCard .task-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+#assigneeTasksCard .btn-action {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+#assigneeTasksCard .btn-edit {
+  background: #f59e0b;
+  color: white;
+}
+
+#assigneeTasksCard .btn-edit:hover {
+  background: #d97706;
+  transform: translateY(-1px);
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .assignee-details-header {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+  
+  .view-toggle {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .table-container {
+    overflow-x: auto;
+  }
+  
+  .table-container .task-table {
+    min-width: 600px;
+  }
+}
+
+@media (max-width: 480px) {
+  .assignee-details-header h3 {
+    font-size: 1.25rem;
+  }
+  
+  .view-btn {
+    padding: 0.75rem;
+    font-size: 0.85rem;
+  }
+}

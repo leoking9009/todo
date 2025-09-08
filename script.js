@@ -164,10 +164,10 @@ function renderTaskGrid(tasks, containerId) {
       
       <div class="task-actions">
         ${!task.is_completed ? 
-          '<button class="btn-action btn-complete" onclick="toggleTaskComplete(' + task.id + ')">완료</button>' :
-          '<button class="btn-action btn-undo" onclick="toggleTaskComplete(' + task.id + ')">완료취소</button>'
+          `<button class="btn-action btn-complete" onclick="toggleTaskComplete(${task.id})">완료</button>` :
+          `<button class="btn-action btn-undo" onclick="toggleTaskComplete(${task.id})">완료취소</button>`
         }
-        <button class="btn-action btn-edit" onclick="openEditModal(' + task.id + ')">수정</button>
+        <button class="btn-action btn-edit" onclick="openEditModal(${task.id})">수정</button>
         <button class="btn-action btn-delete" onclick="deleteTask(${task.id})">삭제</button>
       </div>
     </div>
@@ -219,10 +219,10 @@ function renderTaskTable(tasks, containerId) {
               <td class="actions-cell">
                 <div class="table-actions">
                   ${!task.is_completed ? 
-                    '<button class="btn-action btn-complete btn-sm" onclick="toggleTaskComplete(' + task.id + ')" title="완료">✓</button>' :
-                    '<button class="btn-action btn-undo btn-sm" onclick="toggleTaskComplete(' + task.id + ')" title="완료취소">↺</button>'
+                    `<button class="btn-action btn-complete btn-sm" onclick="toggleTaskComplete(${task.id})" title="완료">✓</button>` :
+                    `<button class="btn-action btn-undo btn-sm" onclick="toggleTaskComplete(${task.id})" title="완료취소">↺</button>`
                   }
-                  <button class="btn-action btn-edit btn-sm" onclick="openEditModal(' + task.id + ')" title="수정">✎</button>
+                  <button class="btn-action btn-edit btn-sm" onclick="openEditModal(${task.id})" title="수정">✎</button>
                   <button class="btn-action btn-delete btn-sm" onclick="deleteTask(${task.id})" title="삭제">✖</button>
                 </div>
               </td>
@@ -292,8 +292,15 @@ function showAssigneeDetails(assigneeName) {
   const container = document.getElementById('assigneeDetails');
   
   container.innerHTML = `
-    <h3>${escapeHtml(assigneeName)}의 과제 목록</h3>
-    <div class="task-grid">
+    <div class="assignee-details-header">
+      <h3>${escapeHtml(assigneeName)}의 과제 목록</h3>
+      <div class="view-toggle">
+        <button class="view-btn active" onclick="toggleAssigneeView('card', this)" data-view="card">카드 보기</button>
+        <button class="view-btn" onclick="toggleAssigneeView('table', this)" data-view="table">행형 보기</button>
+      </div>
+    </div>
+    
+    <div id="assigneeTasksCard" class="task-grid">
       ${assigneeTasks.map(task => `
         <div class="task-card ${task.is_urgent ? 'urgent' : ''} ${task.is_completed ? 'completed' : ''}" data-id="${task.id}">
           <div class="task-header">
@@ -301,24 +308,77 @@ function showAssigneeDetails(assigneeName) {
             <div class="task-badges">
               ${task.is_urgent ? '<span class="badge urgent">긴급</span>' : ''}
               ${task.is_completed ? '<span class="badge completed">완료</span>' : ''}
+              ${getDateBadge(task.deadline)}
             </div>
           </div>
           
           <div class="task-info">
             <p><strong>생성일:</strong> ${formatDate(task.created_date)}</p>
+            <p><strong>마감기한:</strong> ${formatDate(task.deadline)}</p>
             ${task.submission_target ? `<p><strong>제출처:</strong> ${escapeHtml(task.submission_target)}</p>` : ''}
             ${task.notes ? `<p><strong>비고:</strong> ${escapeHtml(task.notes)}</p>` : ''}
           </div>
           
           <div class="task-actions">
             ${!task.is_completed ? 
-              '<button class="btn-action btn-complete" onclick="toggleTaskComplete(' + task.id + ')">완료</button>' :
-              '<button class="btn-action btn-undo" onclick="toggleTaskComplete(' + task.id + ')">완료취소</button>'
+              `<button class="btn-action btn-complete" onclick="toggleTaskComplete(${task.id})">완료</button>` :
+              `<button class="btn-action btn-undo" onclick="toggleTaskComplete(${task.id})">완료취소</button>`
             }
+            <button class="btn-action btn-edit" onclick="openEditModal(${task.id})">수정</button>
             <button class="btn-action btn-delete" onclick="deleteTask(${task.id})">삭제</button>
           </div>
         </div>
       `).join('')}
+    </div>
+    
+    <div id="assigneeTasksTable" class="table-container" style="display: none;">
+      <table class="task-table">
+        <thead>
+          <tr>
+            <th>과제명</th>
+            <th>마감기한</th>
+            <th>상태</th>
+            <th>긴급</th>
+            <th>제출처</th>
+            <th>작업</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${assigneeTasks.map(task => `
+            <tr class="${task.is_completed ? 'completed' : ''}" data-id="${task.id}">
+              <td class="task-name-cell">
+                ${escapeHtml(task.task_name)}
+                ${task.notes ? `<div class="task-notes">${escapeHtml(task.notes)}</div>` : ''}
+              </td>
+              <td class="deadline-cell">
+                ${formatDate(task.deadline)}
+                ${getDateBadge(task.deadline)}
+              </td>
+              <td class="status-cell">
+                <span class="status-badge ${task.is_completed ? 'completed' : 'pending'}">
+                  ${task.is_completed ? '완료' : '진행중'}
+                </span>
+              </td>
+              <td class="urgent-cell">
+                ${task.is_urgent ? '<span class="urgent-badge">긴급</span>' : ''}
+              </td>
+              <td class="target-cell">
+                ${escapeHtml(task.submission_target || '')}
+              </td>
+              <td class="actions-cell">
+                <div class="action-buttons">
+                  ${!task.is_completed ? 
+                    `<button class="btn-action btn-complete btn-sm" onclick="toggleTaskComplete(${task.id})" title="완료">✓</button>` :
+                    `<button class="btn-action btn-undo btn-sm" onclick="toggleTaskComplete(${task.id})" title="완료취소">↶</button>`
+                  }
+                  <button class="btn-action btn-edit btn-sm" onclick="openEditModal(${task.id})" title="수정">✎</button>
+                  <button class="btn-action btn-delete btn-sm" onclick="deleteTask(${task.id})" title="삭제">✕</button>
+                </div>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
     </div>
   `;
 }
@@ -861,6 +921,27 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('nextMonth')?.addEventListener('click', goToNextMonth);
 });
 
+// 담당자별 뷰 토글 함수
+function toggleAssigneeView(viewType, buttonElement) {
+  const cardView = document.getElementById('assigneeTasksCard');
+  const tableView = document.getElementById('assigneeTasksTable');
+  const buttons = document.querySelectorAll('.view-btn');
+  
+  // 모든 버튼 비활성화
+  buttons.forEach(btn => btn.classList.remove('active'));
+  
+  // 클릭된 버튼 활성화
+  buttonElement.classList.add('active');
+  
+  if (viewType === 'card') {
+    cardView.style.display = 'grid';
+    tableView.style.display = 'none';
+  } else {
+    cardView.style.display = 'none';
+    tableView.style.display = 'block';
+  }
+}
+
 // 전역 함수로 노출 (HTML에서 사용)
 window.handleCredentialResponse = handleCredentialResponse;
 window.toggleTaskComplete = toggleTaskComplete;
@@ -868,5 +949,6 @@ window.deleteTask = deleteTask;
 window.showAssigneeDetails = showAssigneeDetails;
 window.openEditModal = openEditModal;
 window.closeEditModal = closeEditModal;
+window.toggleAssigneeView = toggleAssigneeView;
 window.goToPreviousMonth = goToPreviousMonth;
 window.goToNextMonth = goToNextMonth;
