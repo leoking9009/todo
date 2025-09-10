@@ -97,7 +97,7 @@ async function loadTasks() {
 function refreshCurrentTab() {
   switch (currentTab) {
     case 'all':
-      renderTaskList(allTasks, 'taskList');
+      renderTaskList(allTasks.filter(task => !task.is_completed), 'taskList');
       break;
     case 'today':
       renderTaskList(getTodayTasks(), 'todayTaskList');
@@ -461,7 +461,7 @@ function switchView(viewType, containerId) {
   } else {
     switch(currentTab) {
       case 'all':
-        tasks = allTasks;
+        tasks = allTasks.filter(task => !task.is_completed);
         break;
       case 'today':
         tasks = getTodayTasks();
