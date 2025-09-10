@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>팀 소통 게시판</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* 헤더 스타일 */
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #4a5568;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            color: #718096;
+            font-size: 1.1em;
+        }
+
+        /* 액션 바 */
+        .action-bar {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .search-box {
+            flex: 1;
+            max-width: 400px;
+            position: relative;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 45px 12px 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 50px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .search-box input:focus {
+            border-color: #667eea;
+            outline: none;
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .search-box i {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #a0aec0;
+        }
+
+        .new-post-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .new-post-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        /* 카테고리 필터 */
+        .category-filter {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .category-btn {
+            padding: 8px 16px;
+            border: 2px solid #e2e8f0;
+            background: white;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .category-btn:hover,
+        .category-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        /* 게시판 컨테이너 */
+        .board-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        /* 게시글 카드 */
+        .post-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            border: 1px solid #f1f5f9;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .post-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .post-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+
+        .post-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .post-title {
+            font-size: 1.4em;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+
+        .post-meta {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 0.9em;
+            color: #718096;
+        }
+
+        .post-author {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+        }
+
+        .post-author .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .post-content {
+            color: #4a5568;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .post-tags {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .tag {
+            background: #f0f4f8;
+            color: #4a5568;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 500;
+        }
+
+        .tag.urgent {
+            background: #fed7d7;
+            color: #c53030;
+        }
+
+        .tag.announcement {
+            background: #bee3f8;
+            color: #2b6cb0;
+        }
+
+        .tag.question {
+            background: #d6f5d6;
+            color: #2f855a;
+        }
+
+        .post-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid #f1f5f9;
+            padding-top: 15px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+        }
+
+        .action-btn {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 8px 12px;
+            border: none;
+            background: #f8fafc;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9em;
+            color: #64748b;
+        }
+
+        .action-btn:hover {
+            background: #e2e8f0;
+            color: #475569;
+        }
+
+        .action-btn.liked {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+
+        .post-stats {
+            font-size: 0.9em;
+            color: #94a3b8;
+        }
+
+        /* 빈 상태 */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #718096;
+        }
+
+        .empty-state i {
+            font-size: 4em;
+            margin-bottom: 20px;
+            color: #e2e8f0;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+            color: #4a5568;
+        }
+
+        /* 로딩 애니메이션 */
+        .loading {
+            display: flex;
+            justify-content: center;
+            padding: 40px;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f4f6;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 반응형 디자인 */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .header {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .action-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .search-box {
+                max-width: 100%;
+            }
+
+            .category-filter {
+                justify-content: center;
+            }
+
+            .post-header {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .post-meta {
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+
+            .post-actions {
+                flex-direction: column;
+                gap: 15px;
+                align-items: stretch;
+            }
+
+            .action-buttons {
+                justify-content: center;
+            }
+        }
+
+        /* 부드러운 등장 애니메이션 */
+        .post-card {
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 헤더 -->
+        <div class="header">
+            <h1><i class="fas fa-users"></i> 팀 소통 게시판</h1>
+            <p>팀원들과 자유롭게 소통하고 정보를 공유해보세요</p>
+        </div>
+
+        <!-- 액션 바 -->
+        <div class="action-bar">
+            <div class="search-box">
+                <input type="text" placeholder="게시글을 검색해보세요...">
+                <i class="fas fa-search"></i>
+            </div>
+            
+            <div class="category-filter">
+                <button class="category-btn active">전체</button>
+                <button class="category-btn">공지</button>
+                <button class="category-btn">질문</button>
+                <button class="category-btn">자유</button>
+                <button class="category-btn">제안</button>
+            </div>
+
+            <button class="new-post-btn">
+                <i class="fas fa-plus"></i>
+                새 글 작성
+            </button>
+        </div>
+
+        <!-- 게시판 컨테이너 -->
+        <div class="board-container">
+            <!-- 게시글 카드 예시 1 -->
+            <div class="post-card">
+                <div class="post-header">
+                    <div>
+                        <h3 class="post-title">신규 프로젝트 킥오프 미팅 안내</h3>
+                        <div class="post-meta">
+                            <div class="post-author">
+                                <div class="avatar">김</div>
+                                김프로
+                            </div>
+                            <span><i class="fas fa-clock"></i> 2시간 전</span>
+                            <span><i class="fas fa-eye"></i> 24</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="post-tags">
+                    <span class="tag announcement">공지</span>
+                    <span class="tag urgent">긴급</span>
+                </div>
+                
+                <div class="post-content">
+                    안녕하세요! 다음 주 월요일에 새로운 프로젝트의 킥오프 미팅을 진행하려고 합니다. 
+                    모든 팀원분들의 참석 부탁드리며, 미팅 전까지 첨부된 기획서를 미리 검토해주세요.
+                </div>
+                
+                <div class="post-actions">
+                    <div class="action-buttons">
+                        <button class="action-btn">
+                            <i class="fas fa-heart"></i>
+                            좋아요 5
+                        </button>
+                        <button class="action-btn">
+                            <i class="fas fa-comment"></i>
+                            댓글 3
+                        </button>
+                        <button class="action-btn">
+                            <i class="fas fa-share"></i>
+                            공유
+                        </button>
+                    </div>
+                    <div class="post-stats">
+                        댓글 3개 • 좋아요 5개
+                    </div>
+                </div>
+            </div>
+
+            <!-- 게시글 카드 예시 2 -->
+            <div class="post-card">
+                <div class="post-header">
+                    <div>
+                        <h3 class="post-title">코드 리뷰 방식 개선 제안</h3>
+                        <div class="post-meta">
+                            <div class="post-author">
+                                <div class="avatar">이</div>
+                                이개발
+                            </div>
+                            <span><i class="fas fa-clock"></i> 5시간 전</span>
+                            <span><i class="fas fa-eye"></i> 18</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="post-tags">
+                    <span class="tag">제안</span>
+                    <span class="tag">개발</span>
+                </div>
+                
+                <div class="post-content">
+                    현재 코드 리뷰 프로세스에 대해 몇 가지 개선안을 제안하고 싶습니다. 
+                    더 효율적이고 체계적인 리뷰를 위해 새로운 템플릿과 체크리스트 도입을 고려해보면 어떨까요?
+                </div>
+                
+                <div class="post-actions">
+                    <div class="action-buttons">
+                        <button class="action-btn liked">
+                            <i class="fas fa-heart"></i>
+                            좋아요 8
+                        </button>
+                        <button class="action-btn">
+                            <i class="fas fa-comment"></i>
+                            댓글 7
+                        </button>
+                        <button class="action-btn">
+                            <i class="fas fa-share"></i>
+                            공유
+                        </button>
+                    </div>
+                    <div class="post-stats">
+                        댓글 7개 • 좋아요 8개
+                    </div>
+                </div>
+            </div>
+
+            <!-- 게시글 카드 예시 3 -->
+            <div class="post-card">
+                <div class="post-header">
+                    <div>
+                        <h3 class="post-title">데이터베이스 연결 이슈 해결 방법 문의</h3>
+                        <div class="post-meta">
+                            <div class="post-author">
+                                <div class="avatar">박</div>
+                                박신입
+                            </div>
+                            <span><i class="fas fa-clock"></i> 1일 전</span>
+                            <span><i class="fas fa-eye"></i> 32</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="post-tags">
+                    <span class="tag question">질문</span>
+                    <span class="tag">DB</span>
+                </div>
+                
+                <div class="post-content">
+                    Neon DB 연결 시 timeout 에러가 자주 발생하고 있습니다. 
+                    connection pool 설정이나 retry 로직에 문제가 있는 것 같은데, 비슷한 경험이 있으신 분 계신가요?
+                </div>
+                
+                <div class="post-actions">
+                    <div class="action-buttons">
+                        <button class="action-btn">
+                            <i class="fas fa-heart"></i>
+                            좋아요 2
+                        </button>
+                        <button class="action-btn">
+                            <i class="fas fa-comment"></i>
+                            댓글 12
+                        </button>
+                        <button class="action-btn">
+                            <i class="fas fa-share"></i>
+                            공유
+                        </button>
+                    </div>
+                    <div class="post-stats">
+                        댓글 12개 • 좋아요 2개
+                    </div>
+                </div>
+            </div>
+
+            <!-- 게시글 카드 예시 4 -->
+            <div class="post-card">
+                <div class="post-header">
+                    <div>
+                        <h3 class="post-title">팀 회식 장소 추천 받습니다!</h3>
+                        <div class="post-meta">
+                            <div class="post-author">
+                                <div class="avatar">최</div>
+                                최팀장
+                            </div>
+                            <span><i class="fas fa-clock"></i> 2일 전</span>
+                            <span><i class="fas fa-eye"></i> 45</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="post-tags">
+                    <span class="tag">자유</span>
+                    <span class="tag">회식</span>
+                </div>
+                
+                <div class="post-content">
+                    이번 분기 마무리 겸 팀 회식을 계획하고 있습니다. 
+                    강남 근처에서 분위기 좋고 맛있는 곳 아시는 분 있으시면 추천 부탁드려요!
+                </div>
+                
+                <div class="post-actions">
+                    <div class="action-buttons">
+                        <button class="action-btn">
+                            <i class="fas fa-heart"></i>
+                            좋아요 15
+                        </button>
+                        <button class="action-btn">
+                            <i class="fas fa-comment"></i>
+                            댓글 23
+                        </button>
+                        <button class="action-btn">
+                            <i class="fas fa-share"></i>
+                            공유
+                        </button>
+                    </div>
+                    <div class="post-stats">
+                        댓글 23개 • 좋아요 15개
+                    </div>
+                </div>
+            </div>
+
+            <!-- 더 많은 게시글이 있을 경우 로딩 버튼 -->
+            <div style="text-align: center; padding: 30px;">
+                <button class="new-post-btn" style="background: #f8fafc; color: #64748b; border: 2px solid #e2e8f0;">
+                    <i class="fas fa-plus"></i>
+                    더 많은 게시글 보기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 간단한 인터랙션 추가
+        document.addEventListener('DOMContentLoaded', function() {
+            // 카테고리 버튼 클릭 이벤트
+            const categoryBtns = document.querySelectorAll('.category-btn');
+            categoryBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    categoryBtns.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+
+            // 좋아요 버튼 클릭 이벤트
+            const likeButtons = document.querySelectorAll('.action-btn');
+            likeButtons.forEach(btn => {
+                if (btn.textContent.includes('좋아요')) {
+                    btn.addEventListener('click', function() {
+                        this.classList.toggle('liked');
+                        // 실제로는 여기서 API 호출하여 좋아요 상태 업데이트
+                    });
+                }
+            });
+
+            // 검색 기능 (데모용)
+            const searchInput = document.querySelector('.search-box input');
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                // 실제로는 여기서 검색 API 호출
+                console.log('검색어:', searchTerm);
+            });
+
+            // 새 글 작성 버튼 클릭
+            const newPostBtn = document.querySelector('.new-post-btn');
+            newPostBtn.addEventListener('click', function() {
+                alert('새 글 작성 모달을 열어야 합니다!');
+                // 실제로는 여기서 글 작성 모달 오픈
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon DB 연결 테스트</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .loading {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status.connected {
+            background: #28a745;
+            color: white;
+        }
+        .status.error {
+            background: #dc3545;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Neon DB 연결 테스트</h1>
+        
+        <button id="testBtn" onclick="testConnection()">
+            Neon DB 연결 테스트 실행
+        </button>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        async function testConnection() {
+            const btn = document.getElementById('testBtn');
+            const result = document.getElementById('result');
+            
+            // 버튼 비활성화 및 로딩 상태
+            btn.disabled = true;
+            btn.textContent = '테스트 중...';
+            result.className = 'result loading';
+            result.textContent = '데이터베이스 연결을 테스트하는 중입니다...';
+            
+            try {
+                // Netlify Functions 엔드포인트 호출
+                const response = await fetch('/.netlify/functions/test-db');
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    // 성공 응답
+                    result.className = 'result success';
+                    result.innerHTML = `✅ <strong>연결 성공!</strong>
+
+${data.message}
+
+<strong>연결 정보:</strong>
+• 현재 시간: ${new Date(data.data.currentTime).toLocaleString('ko-KR')}
+• 연결 상태: <span class="status connected">${data.data.connectionStatus}</span>
+• 생성된 테이블: ${data.data.tablesCreated.join(', ')}
+
+테이블 생성 완료: ${data.data.tablesCreated.length}개`;
+                } else {
+                    // 실패 응답
+                    result.className = 'result error';
+                    result.innerHTML = `❌ <strong>연결 실패</strong>
+
+${data.message}
+
+<strong>에러 정보:</strong>
+• 메시지: ${data.error}
+• 상태: <span class="status error">연결 실패</span>
+
+<strong>디버깅 정보:</strong>
+${JSON.stringify(data.details, null, 2)}`;
+                }
+            } catch (error) {
+                // 네트워크 에러 등
+                result.className = 'result error';
+                result.innerHTML = `❌ <strong>네트워크 오류</strong>
+
+API 호출 중 오류가 발생했습니다.
+
+<strong>에러 메시지:</strong>
+${error.message}
+
+<strong>확인사항:</strong>
+• Netlify Dev가 실행 중인지 확인
+• .env 파일의 DATABASE_URL이 올바른지 확인
+• 네트워크 연결 상태 확인`;
+            }
+            
+            // 버튼 다시 활성화
+            btn.disabled = false;
+            btn.textContent = 'Neon DB 연결 테스트 실행';
+        }
+        
+        // 페이지 로드 시 자동으로 한 번 테스트 (선택사항)
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Neon DB 테스트 페이지 로드 완료');
+        });
+    </script>
+</body>
+</html>
