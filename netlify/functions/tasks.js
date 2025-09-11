@@ -41,7 +41,7 @@ exports.handler = async (event, context) => {
           INSERT INTO tasks (assignee, task_name, is_urgent, is_completed, submission_target, notes, user_id, deadline, created_date)
           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, COALESCE($9, CURRENT_DATE))
           RETURNING *
-        `, [assignee, task_name, is_urgent || false, is_completed || false, submission_target, notes, user_id, deadline, created_date]);
+        `, [assignee, task_name, is_urgent || false, is_completed || false, submission_target, notes, user_id, deadline || null, created_date]);
         
         return {
           statusCode: 201,

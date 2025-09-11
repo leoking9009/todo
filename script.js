@@ -541,14 +541,14 @@ async function submitTask(event) {
     is_completed: formData.get('isCompleted') === 'on',
     submission_target: formData.get('submissionTarget').trim() || null,
     notes: formData.get('notes').trim() || null,
-    deadline: formData.get('deadline'),
+    deadline: formData.get('deadline') || null,
     created_date: formData.get('createdDate'),
     user_id: currentUser.id
   };
   
   // 유효성 검사
-  if (!taskData.assignee || !taskData.task_name || !taskData.deadline) {
-    alert('담당자, 과제명, 마감기한은 필수 입력 항목입니다.');
+  if (!taskData.assignee || !taskData.task_name) {
+    alert('담당자, 과제명은 필수 입력 항목입니다.');
     return;
   }
   
@@ -863,12 +863,12 @@ async function submitEditTask(event) {
     is_urgent: formData.get('isUrgent') === 'on',
     submission_target: formData.get('submissionTarget').trim() || null,
     notes: formData.get('notes').trim() || null,
-    deadline: formData.get('deadline')
+    deadline: formData.get('deadline') || null
   };
   
   // 유효성 검사
-  if (!taskData.assignee || !taskData.task_name || !taskData.deadline) {
-    alert('담당자, 과제명, 마감기한은 필수 입력 항목입니다.');
+  if (!taskData.assignee || !taskData.task_name) {
+    alert('담당자, 과제명은 필수 입력 항목입니다.');
     return;
   }
   
@@ -3162,22 +3162,83 @@ function parseCsvData(csvText) {
         
         console.log(`${i + 1}번째 줄 헤더 기반 매핑:`, {assignee, taskName, deadline, urgent, submissionTarget, notes});
       } else {
-        // 기존 순서 기반 매핑
-        if (fields.length >= 6) {
-          // 6개 이상: 담당자, 과제명, 마감기한, 긴급여부, 제출처, 비고
-          [assignee, taskName, deadline, urgent, submissionTarget, notes] = fields;
-        } else if (fields.length >= 4) {
-          // 4-5개: 담당자, 과제명, 마감기한, 긴급여부, (제출처/비고)
-          [assignee, taskName, deadline, urgent, submissionTarget] = fields;
-          notes = fields[5] || '';
-        } else {
-          // 3개: 담당자, 과제명, 마감기한
-          [assignee, taskName, deadline] = fields;
+        // 스마트 매핑: 빈 필드를 건너뛰고 실제 데이터가 있는 필드 찾기
+        const nonEmptyFields = fields.filter(field => field && field.trim());
+        console.log(`${i + 1}번째 줄 비어있지 않은 필드들:`, nonEmptyFields);
+        
+        if (nonEmptyFields.length >= 2) {
+          // 최소 2개 필드가 있으면 처리
+          // 과제명은 보통 가장 긴 텍스트이므로 찾기
+          let taskNameField = '';
+          let taskNameIndex = -1;
+          
+          for (let j = 0; j < nonEmptyFields.length; j++) {
+            const field = nonEmptyFields[j].trim();
+            if (field.length > 5 && (field.includes('관련') || field.includes('워크숍') || field.includes('회의') || field.includes('교육') || field.includes('과제') || field.includes('업무'))) {
+              taskNameField = field;
+              taskNameIndex = j;
+              break;
+            }
+          }
+          
+          // 과제명을 찾지 못했으면 가장 긴 필드를 과제명으로
+          if (!taskNameField && nonEmptyFields.length > 0) {
+            for (let j = 0; j < nonEmptyFields.length; j++) {
+              if (!isValidDate(nonEmptyFields[j]) && nonEmptyFields[j].length > 3) {
+                taskNameField = nonEmptyFields[j];
+                taskNameIndex = j;
+                break;
+              }
+            }
+          }
+          
+          // 날짜 필드 찾기
+          let dateField = '';
+          for (const field of nonEmptyFields) {
+            if (isValidDate(field.trim())) {
+              dateField = field.trim();
+              break;
+            }
+          }
+          
+          // 담당자는 과제명과 날짜가 아닌 나머지 짧은 필드
+          let assigneeField = '';
+          for (const field of nonEmptyFields) {
+            const trimmed = field.trim();
+            if (trimmed !== taskNameField && trimmed !== dateField && 
+                trimmed.length <= 10 && trimmed.length >= 2 &&
+                !trimmed.includes('긴급') && !trimmed.includes('완료')) {
+              assigneeField = trimmed;
+              break;
+            }
+          }
+          
+          assignee = assigneeField;
+          taskName = taskNameField;
+          deadline = dateField;
           urgent = '';
           submissionTarget = '';
           notes = '';
+          
+          console.log(`${i + 1}번째 줄 스마트 매핑:`, {assignee, taskName, deadline, urgent, submissionTarget, notes});
+        } else {
+          // 기존 순서 기반 매핑
+          if (fields.length >= 6) {
+            // 6개 이상: 담당자, 과제명, 마감기한, 긴급여부, 제출처, 비고
+            [assignee, taskName, deadline, urgent, submissionTarget, notes] = fields;
+          } else if (fields.length >= 4) {
+            // 4-5개: 담당자, 과제명, 마감기한, 긴급여부, (제출처/비고)
+            [assignee, taskName, deadline, urgent, submissionTarget] = fields;
+            notes = fields[5] || '';
+          } else {
+            // 3개: 담당자, 과제명, 마감기한
+            [assignee, taskName, deadline] = fields;
+            urgent = '';
+            submissionTarget = '';
+            notes = '';
+          }
+          console.log(`${i + 1}번째 줄 순서 기반 매핑:`, {assignee, taskName, deadline, urgent, submissionTarget, notes});
         }
-        console.log(`${i + 1}번째 줄 순서 기반 매핑:`, {assignee, taskName, deadline, urgent, submissionTarget, notes});
       }
       
       // 빈 필드 처리
@@ -3201,19 +3262,45 @@ function parseCsvData(csvText) {
           }
         }
         
-        // 여전히 날짜가 없으면 기본값 설정
+        // 여전히 날짜가 없으면 빈 값으로 유지
         if (!deadline) {
-          const today = new Date();
-          const oneMonthLater = new Date(today);
-          oneMonthLater.setMonth(today.getMonth() + 1);
-          deadline = oneMonthLater.toISOString().split('T')[0];
-          console.warn(`${i + 1}번째 줄: 날짜를 찾을 수 없어 1개월 후로 설정합니다: ${deadline}`);
+          console.log(`${i + 1}번째 줄: 마감기한이 없으므로 빈 값으로 처리합니다.`);
         }
       }
       
       // 필수 필드 검증
       if (!assignee || !taskName) {
-        throw new Error(`${i + 1}번째 줄: 담당자, 과제명은 필수입니다. (담당자: "${assignee}", 과제명: "${taskName}", 마감기한: "${deadline}")`);
+        console.error(`${i + 1}번째 줄 원본 필드:`, fields);
+        console.error(`${i + 1}번째 줄 매핑 결과:`, {assignee, taskName, deadline, urgent, submissionTarget, notes});
+        
+        // 담당자가 비어있지만 과제명이 있는 경우, 다른 필드에서 담당자를 찾아보기
+        if (!assignee && taskName) {
+          console.log(`${i + 1}번째 줄: 담당자가 비어있습니다. 다른 필드에서 담당자를 찾습니다.`);
+          
+          // 다른 필드 중에서 사람 이름 같은 것이 있는지 확인
+          for (let j = 0; j < fields.length; j++) {
+            const field = fields[j]?.trim();
+            if (field && field !== taskName && field !== deadline && 
+                !field.includes('긴급') && !field.includes('완료') && !field.includes('워크숍') &&
+                !field.includes('관련') && !field.includes('회의') && !field.includes('교육') &&
+                !isValidDate(field) && field.length <= 20 && field.length >= 2) {
+              assignee = field;
+              console.log(`${i + 1}번째 줄: ${j + 1}번째 필드에서 담당자를 발견했습니다: "${assignee}"`);
+              break;
+            }
+          }
+          
+          // 여전히 담당자를 찾지 못한 경우, 기본값 설정
+          if (!assignee) {
+            assignee = "미지정";
+            console.warn(`${i + 1}번째 줄: 담당자를 찾을 수 없어 "미지정"으로 설정합니다.`);
+          }
+        }
+        
+        // 여전히 필수 필드가 비어있으면 에러
+        if (!assignee || !taskName) {
+          throw new Error(`${i + 1}번째 줄: 담당자, 과제명은 필수입니다. (담당자: "${assignee}", 과제명: "${taskName}", 마감기한: "${deadline}")`);
+        }
       }
       
       console.log(`${i + 1}번째 줄 필드 매핑:`, {assignee, taskName, deadline, urgent, submissionTarget, notes});
@@ -3231,34 +3318,42 @@ function parseCsvData(csvText) {
         }
       }
       
-      // 날짜 형식 검증 및 변환
-      if (!isValidDate(deadline)) {
-        // 필드에서 날짜 같은 것을 찾아보기
-        let foundDateField = null;
-        let dateFieldIndex = -1;
-        
-        for (let j = 0; j < fields.length; j++) {
-          if (isValidDate(fields[j])) {
-            foundDateField = fields[j];
-            dateFieldIndex = j;
-            break;
+      // 날짜 형식 검증 및 변환 (빈 값 허용)
+      let isoDeadline = '';
+      
+      if (deadline) {
+        if (!isValidDate(deadline)) {
+          // 필드에서 날짜 같은 것을 찾아보기
+          let foundDateField = null;
+          let dateFieldIndex = -1;
+          
+          for (let j = 0; j < fields.length; j++) {
+            if (fields[j] && isValidDate(fields[j])) {
+              foundDateField = fields[j];
+              dateFieldIndex = j;
+              break;
+            }
+          }
+          
+          if (foundDateField) {
+            console.warn(`${i + 1}번째 줄: ${dateFieldIndex + 1}번째 필드에서 유효한 날짜를 발견했습니다: "${foundDateField}"`);
+            deadline = foundDateField;
+          } else {
+            console.warn(`${i + 1}번째 줄: 마감기한이 올바른 날짜 형식이 아닙니다. (입력값: "${deadline}") - 빈 값으로 처리합니다.`);
+            deadline = '';
           }
         }
         
-        if (foundDateField) {
-          console.warn(`${i + 1}번째 줄: ${dateFieldIndex + 1}번째 필드에서 유효한 날짜를 발견했습니다: "${foundDateField}"`);
-          deadline = foundDateField;
-        } else {
-          throw new Error(`${i + 1}번째 줄: 마감기한이 올바른 날짜 형식이 아닙니다. (입력값: "${deadline}")
-전체 필드: [${fields.join(', ')}]
-지원 형식: YYYY-MM-DD, YYYY/MM/DD, YYYY.MM.DD, MM/DD/YYYY, DD/MM/YYYY, 2024년 12월 25일`);
+        // 날짜가 있으면 표준 ISO 형식으로 변환
+        if (deadline) {
+          isoDeadline = convertToISODate(deadline);
+          if (!isoDeadline) {
+            console.warn(`${i + 1}번째 줄: 마감기한 변환에 실패했습니다. (입력값: "${deadline}") - 빈 값으로 처리합니다.`);
+            isoDeadline = '';
+          }
         }
-      }
-      
-      // 날짜를 표준 ISO 형식으로 변환
-      const isoDeadline = convertToISODate(deadline);
-      if (!isoDeadline) {
-        throw new Error(`${i + 1}번째 줄: 마감기한 변환에 실패했습니다. (입력값: "${deadline}")`);
+      } else {
+        console.log(`${i + 1}번째 줄: 마감기한이 비어있습니다.`);
       }
       
       // 긴급여부 처리
@@ -3623,10 +3718,19 @@ function displayCsvPreview(data) {
   tableHTML += `
       </tbody>
     </table>
-    <p class="preview-summary">총 ${data.length}개의 과제가 가져올 준비가 되었습니다.</p>
+    <div class="preview-summary">
+      <p>총 ${data.length}개의 과제가 가져올 준비가 되었습니다.</p>
+    </div>
   `;
   
   tableDiv.innerHTML = tableHTML;
+  
+  // HTML의 기존 버튼 텍스트 업데이트
+  const executeBtn = document.querySelector('.btn-import-execute');
+  if (executeBtn) {
+    executeBtn.textContent = `📝 ${data.length}개 과제 일괄 등록`;
+  }
+  
   previewDiv.style.display = 'block';
 }
 

@@ -3443,6 +3443,98 @@ body {
   box-shadow: none;
 }
 
+/* CSV 가져오기 액션 버튼들 */
+.csv-import-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.btn-execute-import {
+  padding: 0.75rem 2rem;
+  background: linear-gradient(135deg, #48bb78, #38a169);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 2px 8px rgba(72, 187, 120, 0.2);
+}
+
+.btn-execute-import:hover {
+  background: linear-gradient(135deg, #38a169, #48bb78);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
+}
+
+.btn-cancel-import {
+  padding: 0.75rem 2rem;
+  background: linear-gradient(135deg, #e53e3e, #c53030);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 2px 8px rgba(229, 62, 62, 0.2);
+}
+
+.btn-cancel-import:hover {
+  background: linear-gradient(135deg, #c53030, #e53e3e);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(229, 62, 62, 0.3);
+}
+
+/* HTML의 기존 CSV 액션 버튼들 */
+.btn-import-execute {
+  padding: 0.75rem 2rem;
+  background: linear-gradient(135deg, #48bb78, #38a169);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(72, 187, 120, 0.2);
+}
+
+.btn-import-execute:hover {
+  background: linear-gradient(135deg, #38a169, #48bb78);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
+}
+
+.btn-import-cancel {
+  padding: 0.75rem 2rem;
+  background: linear-gradient(135deg, #e53e3e, #c53030);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(229, 62, 62, 0.2);
+}
+
+.btn-import-cancel:hover {
+  background: linear-gradient(135deg, #c53030, #e53e3e);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(229, 62, 62, 0.3);
+}
+
 .btn-csv-cancel {
   padding: 0.75rem 1.5rem;
   background: #edf2f7;
@@ -3524,9 +3616,19 @@ body {
   }
   
   .btn-csv-import,
-  .btn-csv-cancel {
+  .btn-csv-cancel,
+  .btn-execute-import,
+  .btn-cancel-import,
+  .btn-import-execute,
+  .btn-import-cancel {
     width: 100%;
     justify-content: center;
+  }
+  
+  .csv-import-actions,
+  .csv-actions {
+    flex-direction: column;
+    gap: 0.75rem;
   }
   
   .csv-preview-table {
