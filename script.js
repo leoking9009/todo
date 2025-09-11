@@ -3090,7 +3090,38 @@ function parseCsvData(csvText) {
     const lines = csvText.trim().split('\n');
     const data = [];
     
-    for (let i = 0; i < lines.length; i++) {
+    let startIndex = 0;
+    
+    // 첫 번째 줄이 헤더인지 확인
+    if (lines.length > 0) {
+      const firstLine = lines[0].trim();
+      const firstFields = parseCSVLine(firstLine);
+      
+      // 헤더 감지 키워드들
+      const headerKeywords = [
+        '담당자', '과제명', '마감', '긴급', '제출처', '비고', '완료', '생성일', '상태',
+        'assignee', 'task', 'name', 'deadline', 'urgent', 'target', 'notes', 'completed', 'created', 'status',
+        '이름', '제목', '날짜', '우선순위'
+      ];
+      
+      // 첫 번째 줄의 필드들 중 하나라도 헤더 키워드를 포함하면 헤더로 간주
+      const isHeader = firstFields.some(field => 
+        headerKeywords.some(keyword => 
+          field.toLowerCase().includes(keyword.toLowerCase())
+        )
+      );
+      
+      if (isHeader) {
+        console.log('헤더 행을 감지했습니다:', firstFields);
+        startIndex = 1; // 첫 번째 줄 건너뛰기
+        
+        // 헤더를 기반으로 필드 매핑 정보 추출
+        window.csvHeaderMapping = analyzeHeaderMapping(firstFields);
+        console.log('헤더 기반 필드 매핑:', window.csvHeaderMapping);
+      }
+    }
+    
+    for (let i = startIndex; i < lines.length; i++) {
       const line = lines[i].trim();
       if (!line) continue;
       
@@ -3106,20 +3137,39 @@ function parseCsvData(csvText) {
       // 필드 매핑을 더 유연하게 처리
       let assignee, taskName, deadline, urgent, submissionTarget, notes;
       
-      // 필드 수에 따라 다르게 처리
-      if (fields.length >= 6) {
-        // 6개 이상: 담당자, 과제명, 마감기한, 긴급여부, 제출처, 비고
-        [assignee, taskName, deadline, urgent, submissionTarget, notes] = fields;
-      } else if (fields.length >= 4) {
-        // 4-5개: 담당자, 과제명, 마감기한, 긴급여부, (제출처/비고)
-        [assignee, taskName, deadline, urgent, submissionTarget] = fields;
-        notes = fields[5] || '';
+      // 헤더 매핑이 있으면 사용, 없으면 기본 순서로 처리
+      if (window.csvHeaderMapping && (
+          window.csvHeaderMapping.assigneeIndex >= 0 || 
+          window.csvHeaderMapping.taskNameIndex >= 0 || 
+          window.csvHeaderMapping.deadlineIndex >= 0
+        )) {
+        // 헤더 기반 매핑 사용
+        const mapping = window.csvHeaderMapping;
+        assignee = fields[mapping.assigneeIndex] || '';
+        taskName = fields[mapping.taskNameIndex] || '';
+        deadline = fields[mapping.deadlineIndex] || '';
+        urgent = fields[mapping.urgentIndex] || '';
+        submissionTarget = fields[mapping.submissionTargetIndex] || '';
+        notes = fields[mapping.notesIndex] || '';
+        
+        console.log(`${i + 1}번째 줄 헤더 기반 매핑:`, {assignee, taskName, deadline, urgent, submissionTarget, notes});
       } else {
-        // 3개: 담당자, 과제명, 마감기한
-        [assignee, taskName, deadline] = fields;
-        urgent = '';
-        submissionTarget = '';
-        notes = '';
+        // 기존 순서 기반 매핑
+        if (fields.length >= 6) {
+          // 6개 이상: 담당자, 과제명, 마감기한, 긴급여부, 제출처, 비고
+          [assignee, taskName, deadline, urgent, submissionTarget, notes] = fields;
+        } else if (fields.length >= 4) {
+          // 4-5개: 담당자, 과제명, 마감기한, 긴급여부, (제출처/비고)
+          [assignee, taskName, deadline, urgent, submissionTarget] = fields;
+          notes = fields[5] || '';
+        } else {
+          // 3개: 담당자, 과제명, 마감기한
+          [assignee, taskName, deadline] = fields;
+          urgent = '';
+          submissionTarget = '';
+          notes = '';
+        }
+        console.log(`${i + 1}번째 줄 순서 기반 매핑:`, {assignee, taskName, deadline, urgent, submissionTarget, notes});
       }
       
       // 필수 필드 검증
@@ -3196,6 +3246,54 @@ function parseCsvData(csvText) {
     alert('CSV 파일 파싱 오류: ' + error.message);
     console.error('CSV 파싱 오류:', error);
   }
+}
+
+// 헤더를 분석하여 필드 매핑 정보를 추출하는 함수
+function analyzeHeaderMapping(headers) {
+  const mapping = {
+    assigneeIndex: -1,
+    taskNameIndex: -1,
+    deadlineIndex: -1,
+    urgentIndex: -1,
+    submissionTargetIndex: -1,
+    notesIndex: -1,
+    completedIndex: -1
+  };
+  
+  for (let i = 0; i < headers.length; i++) {
+    const header = headers[i].toLowerCase();
+    
+    // 담당자
+    if (header.includes('담당자') || header.includes('assignee') || header.includes('이름')) {
+      mapping.assigneeIndex = i;
+    }
+    // 과제명
+    else if (header.includes('과제명') || header.includes('task') || header.includes('제목') || header.includes('name')) {
+      mapping.taskNameIndex = i;
+    }
+    // 마감기한
+    else if (header.includes('마감') || header.includes('deadline') || header.includes('날짜') || header.includes('due')) {
+      mapping.deadlineIndex = i;
+    }
+    // 긴급여부
+    else if (header.includes('긴급') || header.includes('urgent') || header.includes('우선순위') || header.includes('priority')) {
+      mapping.urgentIndex = i;
+    }
+    // 제출처
+    else if (header.includes('제출처') || header.includes('target') || header.includes('부서')) {
+      mapping.submissionTargetIndex = i;
+    }
+    // 비고
+    else if (header.includes('비고') || header.includes('notes') || header.includes('메모') || header.includes('설명')) {
+      mapping.notesIndex = i;
+    }
+    // 완료여부
+    else if (header.includes('완료') || header.includes('completed') || header.includes('상태') || header.includes('status')) {
+      mapping.completedIndex = i;
+    }
+  }
+  
+  return mapping;
 }
 
 // CSV 한 줄 파싱 함수 (따옴표 처리 포함)
