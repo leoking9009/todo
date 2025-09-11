@@ -200,7 +200,7 @@ function refreshCurrentTab() {
       renderTaskList(allTasks.filter(task => task.is_completed), 'completedTaskList');
       break;
     case 'urgent':
-      renderTaskList(allTasks.filter(task => task.is_urgent && !task.is_completed), 'urgentTaskList');
+      renderTaskList(allTasks.filter(task => task.is_urgent), 'urgentTaskList');
       break;
     case 'assignee':
       renderAssigneeView();
@@ -662,7 +662,7 @@ function switchView(viewType, containerId) {
       tasks = allTasks.filter(task => task.is_completed);
       break;
     case 'urgent':
-      tasks = allTasks.filter(task => task.is_urgent && !task.is_completed);
+      tasks = allTasks.filter(task => task.is_urgent);
       break;
   }
   
