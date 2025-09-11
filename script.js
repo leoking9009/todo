@@ -184,7 +184,8 @@ async function loadTasks() {
 function refreshCurrentTab() {
   switch (currentTab) {
     case 'all':
-      renderTaskList(allTasks, 'taskList');
+      // 전체 과제에서 완료된 과제는 제외
+      renderTaskList(allTasks.filter(task => !task.is_completed), 'taskList');
       break;
     case 'today':
       renderTaskList(getTodayTasks(), 'todayTaskList');
@@ -199,7 +200,7 @@ function refreshCurrentTab() {
       renderTaskList(allTasks.filter(task => task.is_completed), 'completedTaskList');
       break;
     case 'urgent':
-      renderTaskList(allTasks.filter(task => task.is_urgent), 'urgentTaskList');
+      renderTaskList(allTasks.filter(task => task.is_urgent && !task.is_completed), 'urgentTaskList');
       break;
     case 'assignee':
       renderAssigneeView();
@@ -645,7 +646,8 @@ function switchView(viewType, containerId) {
   let tasks = [];
   switch(currentTab) {
     case 'all':
-      tasks = allTasks;
+      // 전체 과제에서 완료된 과제는 제외
+      tasks = allTasks.filter(task => !task.is_completed);
       break;
     case 'today':
       tasks = getTodayTasks();
@@ -660,7 +662,7 @@ function switchView(viewType, containerId) {
       tasks = allTasks.filter(task => task.is_completed);
       break;
     case 'urgent':
-      tasks = allTasks.filter(task => task.is_urgent);
+      tasks = allTasks.filter(task => task.is_urgent && !task.is_completed);
       break;
   }
   
