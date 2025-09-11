@@ -3094,9 +3094,16 @@ function parseCsvData(csvText) {
         throw new Error(`${i + 1}번째 줄: 담당자, 과제명, 마감기한은 필수입니다.`);
       }
       
-      // 날짜 형식 검증
+      // 날짜 형식 검증 및 변환
       if (!isValidDate(deadline)) {
-        throw new Error(`${i + 1}번째 줄: 마감기한이 올바른 날짜 형식(YYYY-MM-DD)이 아닙니다.`);
+        throw new Error(`${i + 1}번째 줄: 마감기한이 올바른 날짜 형식이 아닙니다. (입력값: "${deadline}")
+지원 형식: YYYY-MM-DD, YYYY/MM/DD, YYYY.MM.DD, MM/DD/YYYY, DD/MM/YYYY`);
+      }
+      
+      // 날짜를 표준 ISO 형식으로 변환
+      const isoDeadline = convertToISODate(deadline);
+      if (!isoDeadline) {
+        throw new Error(`${i + 1}번째 줄: 마감기한 변환에 실패했습니다. (입력값: "${deadline}")`);
       }
       
       // 긴급여부 처리
@@ -3109,7 +3116,7 @@ function parseCsvData(csvText) {
       data.push({
         assignee: assignee.trim(),
         task_name: taskName.trim(),
-        deadline: deadline.trim(),
+        deadline: isoDeadline,
         is_urgent: isUrgent,
         submission_target: submissionTarget ? submissionTarget.trim() : '',
         notes: notes ? notes.trim() : ''
@@ -3157,17 +3164,139 @@ function parseCSVLine(line) {
   return fields;
 }
 
-// 날짜 형식 검증 함수
+// 날짜 형식 검증 및 변환 함수
 function isValidDate(dateString) {
-  const regex = /^\d{4}-\d{2}-\d{2}$/;
-  if (!regex.test(dateString)) return false;
+  if (!dateString || typeof dateString !== 'string') return false;
   
-  const date = new Date(dateString);
-  const timestamp = date.getTime();
+  const trimmed = dateString.trim();
   
-  if (typeof timestamp !== 'number' || Number.isNaN(timestamp)) return false;
+  // YYYY-MM-DD 형식 (이미 올바른 형식)
+  const iso8601Regex = /^\d{4}-\d{2}-\d{2}$/;
+  if (iso8601Regex.test(trimmed)) {
+    const date = new Date(trimmed);
+    return !isNaN(date.getTime()) && trimmed === date.toISOString().split('T')[0];
+  }
   
-  return dateString === date.toISOString().split('T')[0];
+  // 다른 형식들 시도
+  let date;
+  
+  // YYYY/MM/DD 형식
+  const slashRegex = /^\d{4}\/\d{1,2}\/\d{1,2}$/;
+  if (slashRegex.test(trimmed)) {
+    const [year, month, day] = trimmed.split('/').map(num => parseInt(num, 10));
+    date = new Date(year, month - 1, day);
+    if (!isNaN(date.getTime()) && date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day) {
+      return true;
+    }
+  }
+  
+  // YYYY.MM.DD 형식
+  const dotRegex = /^\d{4}\.\d{1,2}\.\d{1,2}$/;
+  if (dotRegex.test(trimmed)) {
+    const [year, month, day] = trimmed.split('.').map(num => parseInt(num, 10));
+    date = new Date(year, month - 1, day);
+    if (!isNaN(date.getTime()) && date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day) {
+      return true;
+    }
+  }
+  
+  // MM/DD/YYYY 형식 (미국식)
+  const usRegex = /^\d{1,2}\/\d{1,2}\/\d{4}$/;
+  if (usRegex.test(trimmed)) {
+    const [month, day, year] = trimmed.split('/').map(num => parseInt(num, 10));
+    date = new Date(year, month - 1, day);
+    if (!isNaN(date.getTime()) && date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day) {
+      return true;
+    }
+  }
+  
+  // DD/MM/YYYY 형식 (유럽식) - 월과 일이 12보다 큰지로 판단
+  const euRegex = /^\d{1,2}\/\d{1,2}\/\d{4}$/;
+  if (euRegex.test(trimmed)) {
+    const parts = trimmed.split('/').map(num => parseInt(num, 10));
+    // 첫 번째 숫자가 12보다 크면 DD/MM/YYYY로 간주
+    if (parts[0] > 12 || (parts[1] <= 12 && parts[0] <= 31)) {
+      const [day, month, year] = parts;
+      date = new Date(year, month - 1, day);
+      if (!isNaN(date.getTime()) && date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day) {
+        return true;
+      }
+    }
+  }
+  
+  // 마지막으로 브라우저의 Date 파싱 시도
+  date = new Date(trimmed);
+  if (!isNaN(date.getTime())) {
+    return true;
+  }
+  
+  return false;
+}
+
+// 날짜를 YYYY-MM-DD 형식으로 변환하는 함수
+function convertToISODate(dateString) {
+  if (!dateString || typeof dateString !== 'string') return null;
+  
+  const trimmed = dateString.trim();
+  
+  // 이미 YYYY-MM-DD 형식이면 그대로 반환
+  const iso8601Regex = /^\d{4}-\d{2}-\d{2}$/;
+  if (iso8601Regex.test(trimmed)) {
+    return trimmed;
+  }
+  
+  let date;
+  
+  // YYYY/MM/DD 형식
+  const slashRegex = /^\d{4}\/\d{1,2}\/\d{1,2}$/;
+  if (slashRegex.test(trimmed)) {
+    const [year, month, day] = trimmed.split('/').map(num => parseInt(num, 10));
+    date = new Date(year, month - 1, day);
+    if (!isNaN(date.getTime())) {
+      return date.toISOString().split('T')[0];
+    }
+  }
+  
+  // YYYY.MM.DD 형식
+  const dotRegex = /^\d{4}\.\d{1,2}\.\d{1,2}$/;
+  if (dotRegex.test(trimmed)) {
+    const [year, month, day] = trimmed.split('.').map(num => parseInt(num, 10));
+    date = new Date(year, month - 1, day);
+    if (!isNaN(date.getTime())) {
+      return date.toISOString().split('T')[0];
+    }
+  }
+  
+  // MM/DD/YYYY 형식 (미국식)
+  const usRegex = /^\d{1,2}\/\d{1,2}\/\d{4}$/;
+  if (usRegex.test(trimmed)) {
+    const [month, day, year] = trimmed.split('/').map(num => parseInt(num, 10));
+    date = new Date(year, month - 1, day);
+    if (!isNaN(date.getTime())) {
+      return date.toISOString().split('T')[0];
+    }
+  }
+  
+  // DD/MM/YYYY 형식 (유럽식)
+  const euRegex = /^\d{1,2}\/\d{1,2}\/\d{4}$/;
+  if (euRegex.test(trimmed)) {
+    const parts = trimmed.split('/').map(num => parseInt(num, 10));
+    if (parts[0] > 12 || (parts[1] <= 12 && parts[0] <= 31)) {
+      const [day, month, year] = parts;
+      date = new Date(year, month - 1, day);
+      if (!isNaN(date.getTime())) {
+        return date.toISOString().split('T')[0];
+      }
+    }
+  }
+  
+  // 마지막으로 브라우저의 Date 파싱 시도
+  date = new Date(trimmed);
+  if (!isNaN(date.getTime())) {
+    return date.toISOString().split('T')[0];
+  }
+  
+  return null;
 }
 
 // CSV 미리보기 표시 함수
