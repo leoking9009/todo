@@ -3407,10 +3407,14 @@ function isValidDate(dateString) {
   const koreanMatch1 = trimmed.match(koreanRegex1);
   if (koreanMatch1) {
     const [, year, month, day] = koreanMatch1.map(str => parseInt(str, 10));
-    date = new Date(year, month - 1, day);
-    const isValid = !isNaN(date.getTime()) && date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
-    console.log('YYYY년 MM월 DD일 형식 검증:', isValid, `(${year}-${month}-${day})`);
-    if (isValid) return true;
+    // 날짜 유효성 검사
+    if (year >= 1900 && year <= 2100 && month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+      // 월별 일 수 검사
+      const daysInMonth = new Date(year, month, 0).getDate();
+      const isValid = day <= daysInMonth;
+      console.log('YYYY년 MM월 DD일 형식 검증:', isValid, `(${year}-${month}-${day})`);
+      return isValid;
+    }
   }
   
   // YYYY-MM-DD에서 0이 빠진 형식들
@@ -3459,24 +3463,18 @@ function convertToISODate(dateString) {
   const slashYearFirstRegex = /^\d{4}\/\d{1,2}\/\d{1,2}$/;
   if (slashYearFirstRegex.test(trimmed)) {
     const [year, month, day] = trimmed.split('/').map(num => parseInt(num, 10));
-    date = new Date(year, month - 1, day);
-    if (!isNaN(date.getTime())) {
-      const result = date.toISOString().split('T')[0];
-      console.log('YYYY/MM/DD 변환 성공:', result);
-      return result;
-    }
+    const result = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+    console.log('YYYY/MM/DD 변환 성공:', result);
+    return result;
   }
   
   // YYYY.MM.DD 형식
   const dotRegex = /^\d{4}\.\d{1,2}\.\d{1,2}$/;
   if (dotRegex.test(trimmed)) {
     const [year, month, day] = trimmed.split('.').map(num => parseInt(num, 10));
-    date = new Date(year, month - 1, day);
-    if (!isNaN(date.getTime())) {
-      const result = date.toISOString().split('T')[0];
-      console.log('YYYY.MM.DD 변환 성공:', result);
-      return result;
-    }
+    const result = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+    console.log('YYYY.MM.DD 변환 성공:', result);
+    return result;
   }
   
   // MM/DD/YYYY 또는 DD/MM/YYYY 형식 처리
@@ -3487,9 +3485,8 @@ function convertToISODate(dateString) {
     // MM/DD/YYYY 시도
     if (parts[0] <= 12 && parts[1] <= 31) {
       const [month, day, year] = parts;
-      date = new Date(year, month - 1, day);
-      if (!isNaN(date.getTime()) && date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day) {
-        const result = date.toISOString().split('T')[0];
+      if (year >= 1900 && year <= 2100 && month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+        const result = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
         console.log('MM/DD/YYYY 변환 성공:', result);
         return result;
       }
@@ -3498,9 +3495,8 @@ function convertToISODate(dateString) {
     // DD/MM/YYYY 시도
     if (parts[1] <= 12 && parts[0] <= 31) {
       const [day, month, year] = parts;
-      date = new Date(year, month - 1, day);
-      if (!isNaN(date.getTime()) && date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day) {
-        const result = date.toISOString().split('T')[0];
+      if (year >= 1900 && year <= 2100 && month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+        const result = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
         console.log('DD/MM/YYYY 변환 성공:', result);
         return result;
       }
@@ -3512,12 +3508,10 @@ function convertToISODate(dateString) {
   const koreanMatch1 = trimmed.match(koreanRegex1);
   if (koreanMatch1) {
     const [, year, month, day] = koreanMatch1.map(str => parseInt(str, 10));
-    date = new Date(year, month - 1, day);
-    if (!isNaN(date.getTime())) {
-      const result = date.toISOString().split('T')[0];
-      console.log('한국식 변환 성공:', result);
-      return result;
-    }
+    // 시간대 문제를 피하기 위해 직접 ISO 문자열 생성
+    const result = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+    console.log('한국식 변환 성공:', result);
+    return result;
   }
   
   // YYYY-M-D 형식
