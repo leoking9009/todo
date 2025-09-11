@@ -1884,6 +1884,164 @@ function handleTodoFilterClick(event) {
   renderTodos();
 }
 
+// 엑셀 내보내기 함수
+async function exportToExcel() {
+  try {
+    console.log('엑셀 내보내기 시작...');
+    
+    if (!currentUser) {
+      alert('로그인이 필요합니다.');
+      return;
+    }
+
+    // 로딩 표시
+    const exportBtn = document.getElementById('exportExcelButton');
+    const originalText = exportBtn.innerHTML;
+    exportBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 내보내는 중...';
+    exportBtn.disabled = true;
+
+    // 모든 데이터 수집
+    const tasks = allTasks || [];
+    
+    // TODO 데이터 가져오기
+    let todoData = [];
+    try {
+      if (typeof todos !== 'undefined') {
+        todoData = todos;
+      }
+    } catch (e) {
+      console.log('TODO 데이터 없음');
+    }
+    
+    // 게시판 데이터 가져오기
+    let boardData = [];
+    try {
+      if (typeof boardPosts !== 'undefined') {
+        boardData = boardPosts;
+      }
+    } catch (e) {
+      console.log('게시판 데이터 없음');
+    }
+
+    // CSV 형식으로 데이터 준비
+    const csvData = [];
+    
+    // 과제 데이터
+    csvData.push(['=== 과제 데이터 ===']);
+    csvData.push(['ID', '과제명', '담당자', '마감기한', '생성일', '완료여부', '긴급여부', '제출처', '비고']);
+    
+    tasks.forEach(task => {
+      csvData.push([
+        task.id || '',
+        task.task_name || '',
+        task.assignee || '',
+        task.deadline ? formatDateForExcel(task.deadline) : '',
+        task.created_date ? formatDateForExcel(task.created_date) : '',
+        task.is_completed ? '완료' : '진행중',
+        task.is_urgent ? '긴급' : '일반',
+        task.submission_target || '',
+        task.notes || ''
+      ]);
+    });
+
+    // TODO 데이터
+    csvData.push(['']); // 빈 줄
+    csvData.push(['=== 개인 TODO 데이터 ===']);
+    csvData.push(['ID', 'TODO 내용', '우선순위', '완료여부', '생성일']);
+    
+    todoData.forEach(todo => {
+      csvData.push([
+        todo.id || '',
+        todo.text || '',
+        todo.priority || '',
+        todo.is_completed ? '완료' : '진행중',
+        todo.created_at ? formatDateForExcel(todo.created_at) : ''
+      ]);
+    });
+
+    // 게시판 데이터
+    csvData.push(['']); // 빈 줄
+    csvData.push(['=== 게시판 데이터 ===']);
+    csvData.push(['ID', '제목', '내용', '작성자', '카테고리', '긴급여부', '작성일', '조회수', '좋아요']);
+    
+    boardData.forEach(post => {
+      csvData.push([
+        post.id || '',
+        post.title || '',
+        post.content ? post.content.replace(/\n/g, ' ') : '', // 줄바꿈 제거
+        post.author_name || '',
+        getCategoryName(post.category) || '',
+        post.is_urgent ? '긴급' : '일반',
+        post.created_at ? formatDateForExcel(post.created_at) : '',
+        post.views_count || 0,
+        post.likes_count || 0
+      ]);
+    });
+
+    // CSV 문자열 생성
+    const csvContent = csvData.map(row => 
+      row.map(cell => `"${String(cell).replace(/"/g, '""')}"`)
+         .join(',')
+    ).join('\n');
+
+    // BOM 추가 (한글 깨짐 방지)
+    const BOM = '\uFEFF';
+    const csvWithBOM = BOM + csvContent;
+
+    // 파일 다운로드
+    const blob = new Blob([csvWithBOM], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    
+    if (link.download !== undefined) {
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      
+      // 파일명에 현재 날짜 포함
+      const now = new Date();
+      const dateStr = now.getFullYear() + 
+        String(now.getMonth() + 1).padStart(2, '0') + 
+        String(now.getDate()).padStart(2, '0') + '_' +
+        String(now.getHours()).padStart(2, '0') + 
+        String(now.getMinutes()).padStart(2, '0');
+      
+      link.setAttribute('download', `업무관리_백업_${dateStr}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      console.log('엑셀 내보내기 완료');
+      alert(`데이터가 성공적으로 내보내졌습니다.\n파일명: 업무관리_백업_${dateStr}.csv\n\n포함된 데이터:\n- 과제: ${tasks.length}개\n- TODO: ${todoData.length}개\n- 게시판: ${boardData.length}개`);
+    }
+
+  } catch (error) {
+    console.error('엑셀 내보내기 오류:', error);
+    alert('데이터 내보내기 중 오류가 발생했습니다.');
+  } finally {
+    // 버튼 상태 복원
+    const exportBtn = document.getElementById('exportExcelButton');
+    if (exportBtn) {
+      exportBtn.innerHTML = originalText;
+      exportBtn.disabled = false;
+    }
+  }
+}
+
+// 날짜 형식을 엑셀용으로 변환
+function formatDateForExcel(dateString) {
+  if (!dateString) return '';
+  try {
+    const date = new Date(dateString);
+    return date.getFullYear() + '-' + 
+           String(date.getMonth() + 1).padStart(2, '0') + '-' + 
+           String(date.getDate()).padStart(2, '0') + ' ' +
+           String(date.getHours()).padStart(2, '0') + ':' + 
+           String(date.getMinutes()).padStart(2, '0');
+  } catch (error) {
+    return dateString;
+  }
+}
+
 // 전역 함수로 노출 (HTML에서 사용)
 window.handleCredentialResponse = handleCredentialResponse;
 window.toggleTaskComplete = toggleTaskComplete;
@@ -1900,6 +2058,7 @@ window.toggleAssigneeView = toggleAssigneeView;
 window.goToPreviousMonth = goToPreviousMonth;
 window.goToNextMonth = goToNextMonth;
 window.navigateToTab = navigateToTab;
+window.exportToExcel = exportToExcel;
 
 // PWA 관련 변수
 let deferredPrompt;
