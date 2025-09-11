@@ -2884,7 +2884,9 @@ body {
 }
 
 .btn-submit-diary,
-.btn-load-today {
+.btn-load-today,
+.btn-new-diary,
+.btn-delete-diary {
   padding: 0.75rem 1.5rem;
   border: none;
   border-radius: 8px;
@@ -2918,6 +2920,28 @@ body {
   background: linear-gradient(135deg, #38a169, #48bb78);
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(72, 187, 120, 0.3);
+}
+
+.btn-new-diary {
+  background: linear-gradient(135deg, #805ad5, #6b46c1);
+  color: white;
+}
+
+.btn-new-diary:hover {
+  background: linear-gradient(135deg, #6b46c1, #805ad5);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(128, 90, 213, 0.3);
+}
+
+.btn-delete-diary {
+  background: linear-gradient(135deg, #e53e3e, #c53030);
+  color: white;
+}
+
+.btn-delete-diary:hover {
+  background: linear-gradient(135deg, #c53030, #e53e3e);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(229, 62, 62, 0.3);
 }
 
 .recent-diaries {
@@ -3004,7 +3028,9 @@ body {
   }
   
   .btn-submit-diary,
-  .btn-load-today {
+  .btn-load-today,
+  .btn-new-diary,
+  .btn-delete-diary {
     width: 100%;
     justify-content: center;
   }

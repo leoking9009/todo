@@ -158,6 +158,49 @@ exports.handler = async (event, context) => {
         })
       };
 
+    } else if (event.httpMethod === 'DELETE') {
+      // 일지 삭제
+      const { user_id, diary_date } = JSON.parse(event.body);
+      
+      // 필수 필드 검증
+      if (!user_id || !diary_date) {
+        return {
+          statusCode: 400,
+          headers,
+          body: JSON.stringify({
+            success: false,
+            message: '사용자 ID와 날짜는 필수입니다.'
+          })
+        };
+      }
+
+      // 일지 삭제
+      const result = await pool.query(
+        'DELETE FROM diaries WHERE user_id = $1 AND diary_date = $2 RETURNING *',
+        [user_id, diary_date]
+      );
+
+      if (result.rows.length === 0) {
+        return {
+          statusCode: 404,
+          headers,
+          body: JSON.stringify({
+            success: false,
+            message: '삭제할 일지를 찾을 수 없습니다.'
+          })
+        };
+      }
+
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({
+          success: true,
+          message: '일지가 성공적으로 삭제되었습니다.',
+          data: result.rows[0]
+        })
+      };
+
     } else {
       return {
         statusCode: 405,

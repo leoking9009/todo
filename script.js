@@ -2,6 +2,8 @@
 let currentUser = null;
 let allTasks = [];
 let currentTab = 'add';
+let currentDiaryId = null; // 현재 편집 중인 일지 ID
+let isEditingDiary = false; // 일지 편집 모드 여부
 
 // API 베이스 URL (Netlify Functions)
 const API_BASE = '/.netlify/functions';
@@ -647,7 +649,7 @@ function switchTab(tabName) {
   // 오늘 일지 탭일 때 초기화
   if (tabName === 'diary') {
     setTimeout(() => {
-      setDefaultDiaryDateToToday();
+      resetDiaryForm();
       loadRecentDiaries();
     }, 100);
   }
@@ -2686,6 +2688,25 @@ function setDefaultDiaryDateToToday() {
   }
 }
 
+// 일지 폼 버튼 상태 업데이트
+function updateDiaryFormButtons() {
+  const submitBtn = document.querySelector('.btn-submit-diary');
+  const newBtn = document.querySelector('.btn-new-diary');
+  const deleteBtn = document.querySelector('.btn-delete-diary');
+  
+  if (isEditingDiary && currentDiaryId) {
+    // 편집 모드일 때
+    submitBtn.textContent = '💾 수정 저장';
+    newBtn.style.display = 'inline-flex';
+    deleteBtn.style.display = 'inline-flex';
+  } else {
+    // 새 일지 작성 모드일 때
+    submitBtn.textContent = '💾 일지 저장';
+    newBtn.style.display = 'none';
+    deleteBtn.style.display = 'none';
+  }
+}
+
 // 일지 저장 함수
 async function submitDiary() {
   if (!currentUser) {
@@ -2718,8 +2739,15 @@ async function submitDiary() {
     
     if (result.success) {
       console.log('일지가 성공적으로 저장되었습니다.');
-      form.reset();
-      setDefaultDiaryDateToToday();
+      
+      // 저장된 일지 정보로 상태 업데이트
+      currentDiaryId = result.data.id;
+      isEditingDiary = true;
+      
+      // 버튼 상태 업데이트
+      updateDiaryFormButtons();
+      
+      // 최근 일지 목록 새로고침
       loadRecentDiaries();
     } else {
       alert('일지 저장 중 오류가 발생했습니다: ' + (result.message || result.details || '알 수 없는 오류'));
@@ -2729,6 +2757,16 @@ async function submitDiary() {
     console.error('일지 저장 오류:', error);
     alert('일지 저장 중 네트워크 오류가 발생했습니다: ' + error.message);
   }
+}
+
+// 새 일지 작성 모드로 초기화
+function resetDiaryForm() {
+  const form = document.getElementById('diaryForm');
+  form.reset();
+  setDefaultDiaryDateToToday();
+  currentDiaryId = null;
+  isEditingDiary = false;
+  updateDiaryFormButtons();
 }
 
 // 오늘 일지 불러오기 함수
@@ -2750,10 +2788,16 @@ async function loadTodayDiary() {
       document.getElementById('exercise-check').checked = diary.exercise_completed;
       document.getElementById('emotion-diary').value = diary.emotion_diary || '';
       document.getElementById('growth-diary').value = diary.growth_diary || '';
+      
+      // 편집 모드로 설정
+      currentDiaryId = diary.id;
+      isEditingDiary = true;
+      updateDiaryFormButtons();
+      
       console.log('오늘 일지를 불러왔습니다.');
     } else {
       console.log('오늘 작성된 일지가 없습니다.');
-      setDefaultDiaryDateToToday();
+      resetDiaryForm();
     }
   } catch (error) {
     console.error('일지 불러오기 오류:', error);
@@ -2822,10 +2866,66 @@ async function loadDiary(date) {
       document.getElementById('exercise-check').checked = diary.exercise_completed;
       document.getElementById('emotion-diary').value = diary.emotion_diary || '';
       document.getElementById('growth-diary').value = diary.growth_diary || '';
+      
+      // 편집 모드로 설정
+      currentDiaryId = diary.id;
+      isEditingDiary = true;
+      updateDiaryFormButtons();
+      
       console.log(`${date} 일지를 불러왔습니다.`);
     }
   } catch (error) {
     console.error('일지 불러오기 오류:', error);
     alert('일지 불러오기 중 오류가 발생했습니다.');
+  }
+}
+
+// 현재 일지 수정 함수 (사실상 저장과 동일)
+async function editCurrentDiary() {
+  // 현재는 자동 저장 방식이므로 별도 동작 없음
+  console.log('일지 편집 모드에서는 저장 버튼을 사용해주세요.');
+}
+
+// 현재 일지 삭제 함수
+async function deleteCurrentDiary() {
+  if (!currentUser || !currentDiaryId) {
+    alert('삭제할 일지가 없습니다.');
+    return;
+  }
+
+  const diaryDate = document.getElementById('diary-date').value;
+  const confirmDelete = confirm(`${diaryDate} 일지를 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`);
+  
+  if (!confirmDelete) return;
+
+  try {
+    const response = await fetch(`${API_BASE}/diary`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        user_id: currentUser.id,
+        diary_date: diaryDate
+      })
+    });
+
+    const result = await response.json();
+    
+    if (result.success) {
+      console.log('일지가 성공적으로 삭제되었습니다.');
+      
+      // 폼 초기화
+      resetDiaryForm();
+      
+      // 최근 일지 목록 새로고침
+      loadRecentDiaries();
+    } else {
+      alert('일지 삭제 중 오류가 발생했습니다: ' + (result.message || '알 수 없는 오류'));
+      console.error('서버 오류 응답:', result);
+    }
+  } catch (error) {
+    console.error('일지 삭제 오류:', error);
+    alert('일지 삭제 중 네트워크 오류가 발생했습니다: ' + error.message);
   }
 }
