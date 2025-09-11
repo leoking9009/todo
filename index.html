@@ -115,6 +115,7 @@
     <nav class="nav-tabs">
       <button class="tab-btn active" data-tab="add">➕ 과제 등록</button>
       <button class="tab-btn" data-tab="todo">📝 개인 TODO</button>
+      <button class="tab-btn" data-tab="diary">📖 오늘 일지</button>
       <button class="tab-btn" data-tab="all">📋 진행 중 과제</button>
       <button class="tab-btn" data-tab="calendar">📅 달력 보기</button>
       <button class="tab-btn" data-tab="today">📅 오늘 과제</button>
@@ -338,6 +339,59 @@
           <div class="stat-item">
             <span class="stat-label">진행중:</span>
             <span id="pending-todos" class="stat-value">0</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 오늘 일지 -->
+    <div id="tab-diary" class="tab-content">
+      <div class="diary-container">
+        <div class="diary-header">
+          <h2>📖 오늘 일지</h2>
+          <p>하루의 성장과 감정을 기록하세요</p>
+        </div>
+
+        <!-- 일지 작성 폼 -->
+        <div class="diary-form-section">
+          <form id="diaryForm" class="diary-form">
+            <div class="form-group">
+              <label for="diary-date">📅 날짜</label>
+              <input type="date" id="diary-date" name="diary-date" required>
+            </div>
+
+            <div class="form-group">
+              <label for="exercise-check">🚴‍♂️ 실내자전거 달성 여부</label>
+              <div class="checkbox-wrapper">
+                <input type="checkbox" id="exercise-check" name="exercise-check">
+                <label for="exercise-check" class="checkbox-label">오늘 실내자전거를 했습니다</label>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="emotion-diary">😊 감정 일지</label>
+              <textarea id="emotion-diary" name="emotion-diary" rows="4" 
+                        placeholder="오늘 느낀 감정과 기분을 자유롭게 적어보세요..."></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="growth-diary">🌱 성장 일지</label>
+              <textarea id="growth-diary" name="growth-diary" rows="4" 
+                        placeholder="오늘 배운 것, 성장한 점, 개선할 점을 기록해보세요..."></textarea>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn-submit-diary">💾 일지 저장</button>
+              <button type="button" class="btn-load-today" onclick="loadTodayDiary()">📋 오늘 일지 불러오기</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- 최근 일지 목록 -->
+        <div class="recent-diaries">
+          <h3>📚 최근 일지</h3>
+          <div id="recent-diary-list" class="diary-list">
+            <!-- 최근 일지들이 여기에 표시됩니다 -->
           </div>
         </div>
       </div>

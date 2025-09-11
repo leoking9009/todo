@@ -643,6 +643,14 @@ function switchTab(tabName) {
   if (tabName === 'add') {
     setTimeout(() => setDefaultDeadlineToToday(), 100);
   }
+  
+  // 오늘 일지 탭일 때 초기화
+  if (tabName === 'diary') {
+    setTimeout(() => {
+      setDefaultDiaryDateToToday();
+      loadRecentDiaries();
+    }, 100);
+  }
 }
 
 // 대시보드 통계 카드에서 탭으로 이동
@@ -735,6 +743,12 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // 과제 등록 폼
   document.getElementById('taskForm').addEventListener('submit', submitTask);
+  
+  // 일지 폼 제출 이벤트
+  document.getElementById('diaryForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    submitDiary();
+  });
   
   // 과제 수정 폼
   document.getElementById('editTaskForm').addEventListener('submit', submitEditTask);
@@ -2609,5 +2623,159 @@ function setDefaultDeadlineToToday() {
     const todayString = today.toISOString().split('T')[0];
     deadlineInput.value = todayString;
     console.log('마감기한 기본값을 오늘로 설정:', todayString);
+  }
+}
+
+// 일지 날짜 기본값을 오늘 날짜로 설정하는 함수
+function setDefaultDiaryDateToToday() {
+  const diaryDateInput = document.getElementById('diary-date');
+  if (diaryDateInput) {
+    const today = new Date();
+    const todayString = today.toISOString().split('T')[0];
+    diaryDateInput.value = todayString;
+    console.log('일지 날짜 기본값을 오늘로 설정:', todayString);
+  }
+}
+
+// 일지 저장 함수
+async function submitDiary() {
+  if (!currentUser) {
+    alert('로그인이 필요합니다.');
+    return;
+  }
+
+  const form = document.getElementById('diaryForm');
+  const formData = new FormData(form);
+  
+  const diaryData = {
+    user_id: currentUser.id,
+    user_email: currentUser.email,
+    diary_date: formData.get('diary-date'),
+    exercise_completed: document.getElementById('exercise-check').checked,
+    emotion_diary: formData.get('emotion-diary'),
+    growth_diary: formData.get('growth-diary')
+  };
+
+  try {
+    const response = await fetch(`${API_BASE}/diary`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(diaryData)
+    });
+
+    const result = await response.json();
+    
+    if (result.success) {
+      console.log('일지가 성공적으로 저장되었습니다.');
+      form.reset();
+      setDefaultDiaryDateToToday();
+      loadRecentDiaries();
+    } else {
+      alert('일지 저장 중 오류가 발생했습니다: ' + result.message);
+    }
+  } catch (error) {
+    console.error('일지 저장 오류:', error);
+    alert('일지 저장 중 오류가 발생했습니다.');
+  }
+}
+
+// 오늘 일지 불러오기 함수
+async function loadTodayDiary() {
+  if (!currentUser) {
+    alert('로그인이 필요합니다.');
+    return;
+  }
+
+  const today = new Date().toISOString().split('T')[0];
+  
+  try {
+    const response = await fetch(`${API_BASE}/diary?user_id=${currentUser.id}&date=${today}`);
+    const result = await response.json();
+
+    if (result.success && result.data) {
+      const diary = result.data;
+      document.getElementById('diary-date').value = diary.diary_date;
+      document.getElementById('exercise-check').checked = diary.exercise_completed;
+      document.getElementById('emotion-diary').value = diary.emotion_diary || '';
+      document.getElementById('growth-diary').value = diary.growth_diary || '';
+      console.log('오늘 일지를 불러왔습니다.');
+    } else {
+      console.log('오늘 작성된 일지가 없습니다.');
+      setDefaultDiaryDateToToday();
+    }
+  } catch (error) {
+    console.error('일지 불러오기 오류:', error);
+    alert('일지 불러오기 중 오류가 발생했습니다.');
+  }
+}
+
+// 최근 일지 목록 불러오기 함수
+async function loadRecentDiaries() {
+  if (!currentUser) return;
+
+  try {
+    const response = await fetch(`${API_BASE}/diary?user_id=${currentUser.id}&limit=7`);
+    const result = await response.json();
+
+    if (result.success) {
+      const diaries = result.data || [];
+      displayRecentDiaries(diaries);
+    }
+  } catch (error) {
+    console.error('최근 일지 불러오기 오류:', error);
+  }
+}
+
+// 최근 일지 목록 표시 함수
+function displayRecentDiaries(diaries) {
+  const recentDiaryList = document.getElementById('recent-diary-list');
+  
+  if (diaries.length === 0) {
+    recentDiaryList.innerHTML = '<p class="no-diaries">아직 작성된 일지가 없습니다.</p>';
+    return;
+  }
+
+  const diaryHTML = diaries.map(diary => {
+    const date = new Date(diary.diary_date).toLocaleDateString('ko-KR');
+    const exerciseIcon = diary.exercise_completed ? '✅' : '❌';
+    const emotionPreview = diary.emotion_diary ? 
+      (diary.emotion_diary.length > 50 ? diary.emotion_diary.substring(0, 50) + '...' : diary.emotion_diary) : '';
+    const growthPreview = diary.growth_diary ? 
+      (diary.growth_diary.length > 50 ? diary.growth_diary.substring(0, 50) + '...' : diary.growth_diary) : '';
+
+    return `
+      <div class="diary-item" onclick="loadDiary('${diary.diary_date}')">
+        <div class="diary-date">${date}</div>
+        <div class="diary-exercise">🚴‍♂️ ${exerciseIcon}</div>
+        ${emotionPreview ? `<div class="diary-preview"><strong>감정:</strong> ${emotionPreview}</div>` : ''}
+        ${growthPreview ? `<div class="diary-preview"><strong>성장:</strong> ${growthPreview}</div>` : ''}
+      </div>
+    `;
+  }).join('');
+
+  recentDiaryList.innerHTML = diaryHTML;
+}
+
+// 특정 날짜 일지 불러오기 함수
+async function loadDiary(date) {
+  if (!currentUser) return;
+
+  try {
+    const response = await fetch(`${API_BASE}/diary?user_id=${currentUser.id}&date=${date}`);
+    const result = await response.json();
+
+    if (result.success && result.data) {
+      const diary = result.data;
+      document.getElementById('diary-date').value = diary.diary_date;
+      document.getElementById('exercise-check').checked = diary.exercise_completed;
+      document.getElementById('emotion-diary').value = diary.emotion_diary || '';
+      document.getElementById('growth-diary').value = diary.growth_diary || '';
+      console.log(`${date} 일지를 불러왔습니다.`);
+    }
+  } catch (error) {
+    console.error('일지 불러오기 오류:', error);
+    alert('일지 불러오기 중 오류가 발생했습니다.');
   }
 }
