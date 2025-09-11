@@ -4,6 +4,7 @@ let allTasks = [];
 let currentTab = 'add';
 let currentDiaryId = null; // 현재 편집 중인 일지 ID
 let isEditingDiary = false; // 일지 편집 모드 여부
+let csvParsedData = []; // CSV 파싱된 데이터
 
 // API 베이스 URL (Netlify Functions)
 const API_BASE = '/.netlify/functions';
@@ -2627,7 +2628,7 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('logoutButton')?.addEventListener('click', logout);
   
   // 과제 등록 폼
-  document.getElementById('taskForm')?.addEventListener('submit', handleTaskSubmit);
+  document.getElementById('taskForm')?.addEventListener('submit', submitTask);
   
   // 탭 버튼들
   document.querySelectorAll('.tab-btn').forEach(button => {
@@ -3031,4 +3032,279 @@ async function deleteSpecificDiary(date) {
     console.error('일지 삭제 오류:', error);
     alert('일지 삭제 중 네트워크 오류가 발생했습니다: ' + error.message);
   }
+}
+
+// CSV 가져오기 토글 함수
+function toggleCsvImport() {
+  const csvSection = document.getElementById('csv-import-section');
+  const isHidden = csvSection.style.display === 'none';
+  
+  if (isHidden) {
+    csvSection.style.display = 'block';
+    csvSection.scrollIntoView({ behavior: 'smooth' });
+  } else {
+    csvSection.style.display = 'none';
+    // 섹션 초기화
+    cancelCsvImport();
+  }
+}
+
+// CSV 파일 처리 함수
+function handleCsvFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  if (file.type !== 'text/csv' && !file.name.endsWith('.csv')) {
+    alert('CSV 파일만 업로드할 수 있습니다.');
+    input.value = '';
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const csvText = e.target.result;
+    parseCsvData(csvText);
+  };
+  
+  reader.readAsText(file, 'UTF-8');
+}
+
+// CSV 데이터 파싱 함수
+function parseCsvData(csvText) {
+  try {
+    // CSV 파싱 (간단한 구현)
+    const lines = csvText.trim().split('\n');
+    const data = [];
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (!line) continue;
+      
+      // CSV 필드 파싱 (따옴표 처리 포함)
+      const fields = parseCSVLine(line);
+      
+      if (fields.length < 3) {
+        throw new Error(`${i + 1}번째 줄: 최소 3개 필드(담당자, 과제명, 마감기한)가 필요합니다.`);
+      }
+      
+      const [assignee, taskName, deadline, urgent, submissionTarget, notes] = fields;
+      
+      // 필수 필드 검증
+      if (!assignee || !taskName || !deadline) {
+        throw new Error(`${i + 1}번째 줄: 담당자, 과제명, 마감기한은 필수입니다.`);
+      }
+      
+      // 날짜 형식 검증
+      if (!isValidDate(deadline)) {
+        throw new Error(`${i + 1}번째 줄: 마감기한이 올바른 날짜 형식(YYYY-MM-DD)이 아닙니다.`);
+      }
+      
+      // 긴급여부 처리
+      let isUrgent = false;
+      if (urgent) {
+        const urgentLower = urgent.toLowerCase().trim();
+        isUrgent = urgentLower === '긴급' || urgentLower === 'y' || urgentLower === 'yes' || urgentLower === 'urgent';
+      }
+      
+      data.push({
+        assignee: assignee.trim(),
+        task_name: taskName.trim(),
+        deadline: deadline.trim(),
+        is_urgent: isUrgent,
+        submission_target: submissionTarget ? submissionTarget.trim() : '',
+        notes: notes ? notes.trim() : ''
+      });
+    }
+    
+    csvParsedData = data;
+    displayCsvPreview(data);
+    
+  } catch (error) {
+    alert('CSV 파일 파싱 오류: ' + error.message);
+    console.error('CSV 파싱 오류:', error);
+  }
+}
+
+// CSV 한 줄 파싱 함수 (따옴표 처리 포함)
+function parseCSVLine(line) {
+  const fields = [];
+  let current = '';
+  let inQuotes = false;
+  
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    const nextChar = line[i + 1];
+    
+    if (char === '"') {
+      if (inQuotes && nextChar === '"') {
+        // 이스케이프된 따옴표
+        current += '"';
+        i++;
+      } else {
+        // 따옴표 시작/끝
+        inQuotes = !inQuotes;
+      }
+    } else if (char === ',' && !inQuotes) {
+      // 필드 구분자
+      fields.push(current);
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  
+  fields.push(current);
+  return fields;
+}
+
+// 날짜 형식 검증 함수
+function isValidDate(dateString) {
+  const regex = /^\d{4}-\d{2}-\d{2}$/;
+  if (!regex.test(dateString)) return false;
+  
+  const date = new Date(dateString);
+  const timestamp = date.getTime();
+  
+  if (typeof timestamp !== 'number' || Number.isNaN(timestamp)) return false;
+  
+  return dateString === date.toISOString().split('T')[0];
+}
+
+// CSV 미리보기 표시 함수
+function displayCsvPreview(data) {
+  const previewDiv = document.getElementById('csv-preview');
+  const tableDiv = document.getElementById('csv-preview-table');
+  
+  if (data.length === 0) {
+    previewDiv.style.display = 'none';
+    return;
+  }
+  
+  let tableHTML = `
+    <table class="csv-preview-table">
+      <thead>
+        <tr>
+          <th>담당자</th>
+          <th>과제명</th>
+          <th>마감기한</th>
+          <th>긴급여부</th>
+          <th>제출처</th>
+          <th>비고</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+  
+  data.forEach((row, index) => {
+    tableHTML += `
+      <tr>
+        <td>${row.assignee}</td>
+        <td>${row.task_name}</td>
+        <td>${row.deadline}</td>
+        <td>${row.is_urgent ? '긴급' : '일반'}</td>
+        <td>${row.submission_target}</td>
+        <td>${row.notes}</td>
+      </tr>
+    `;
+  });
+  
+  tableHTML += `
+      </tbody>
+    </table>
+    <p class="preview-summary">총 ${data.length}개의 과제가 가져올 준비가 되었습니다.</p>
+  `;
+  
+  tableDiv.innerHTML = tableHTML;
+  previewDiv.style.display = 'block';
+}
+
+// CSV 가져오기 실행 함수
+async function executeCsvImport() {
+  if (csvParsedData.length === 0) {
+    alert('가져올 데이터가 없습니다.');
+    return;
+  }
+  
+  if (!currentUser) {
+    alert('로그인이 필요합니다.');
+    return;
+  }
+  
+  const confirmImport = confirm(`${csvParsedData.length}개의 과제를 등록하시겠습니까?`);
+  if (!confirmImport) return;
+  
+  const executeBtn = document.querySelector('.btn-import-execute');
+  const originalText = executeBtn.textContent;
+  executeBtn.textContent = '⏳ 등록 중...';
+  executeBtn.disabled = true;
+  
+  try {
+    let successCount = 0;
+    let failCount = 0;
+    const errors = [];
+    
+    for (let i = 0; i < csvParsedData.length; i++) {
+      const taskData = {
+        ...csvParsedData[i],
+        user_id: currentUser.id,
+        user_email: currentUser.email
+      };
+      
+      try {
+        const response = await fetch(`${API_BASE}/tasks`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(taskData)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          successCount++;
+        } else {
+          failCount++;
+          errors.push(`${i + 1}번째 과제: ${result.message}`);
+        }
+      } catch (error) {
+        failCount++;
+        errors.push(`${i + 1}번째 과제: 네트워크 오류`);
+      }
+    }
+    
+    // 결과 표시
+    let resultMessage = `CSV 가져오기 완료!\n성공: ${successCount}개\n실패: ${failCount}개`;
+    if (errors.length > 0 && errors.length <= 5) {
+      resultMessage += '\n\n오류 내용:\n' + errors.join('\n');
+    } else if (errors.length > 5) {
+      resultMessage += '\n\n오류가 너무 많습니다. 콘솔을 확인해주세요.';
+      console.error('CSV 가져오기 오류들:', errors);
+    }
+    
+    alert(resultMessage);
+    
+    // 성공한 경우 과제 목록 새로고침
+    if (successCount > 0) {
+      loadTasks();
+    }
+    
+    // 가져오기 섹션 초기화
+    cancelCsvImport();
+    
+  } catch (error) {
+    console.error('CSV 가져오기 오류:', error);
+    alert('CSV 가져오기 중 오류가 발생했습니다.');
+  } finally {
+    executeBtn.textContent = originalText;
+    executeBtn.disabled = false;
+  }
+}
+
+// CSV 가져오기 취소 함수
+function cancelCsvImport() {
+  csvParsedData = [];
+  document.getElementById('csv-file-input').value = '';
+  document.getElementById('csv-preview').style.display = 'none';
+  document.getElementById('csv-preview-table').innerHTML = '';
 }

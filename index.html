@@ -133,7 +133,59 @@
     <!-- 과제 등록 폼 -->
     <div id="tab-add" class="tab-content active">
       <div class="form-container">
-        <h2>새 과제 등록</h2>
+        <div class="form-header">
+          <h2>새 과제 등록</h2>
+          <div class="import-section">
+            <button type="button" class="btn-import-csv" onclick="toggleCsvImport()">📄 CSV 가져오기</button>
+          </div>
+        </div>
+        
+        <!-- CSV 가져오기 섹션 -->
+        <div id="csv-import-section" class="csv-import-section" style="display: none;">
+          <div class="csv-import-header">
+            <h3>📋 CSV 파일로 과제 일괄 등록</h3>
+            <p>CSV 파일을 선택하여 여러 과제를 한 번에 등록할 수 있습니다.</p>
+          </div>
+          
+          <div class="csv-format-info">
+            <details>
+              <summary>📝 CSV 파일 형식 안내</summary>
+              <div class="format-details">
+                <p><strong>필수 컬럼 순서:</strong></p>
+                <ol>
+                  <li><strong>담당자</strong> (필수)</li>
+                  <li><strong>과제명</strong> (필수)</li>
+                  <li><strong>마감기한</strong> (YYYY-MM-DD 형식, 필수)</li>
+                  <li><strong>긴급여부</strong> (긴급/일반 또는 Y/N, 선택)</li>
+                  <li><strong>제출처</strong> (선택)</li>
+                  <li><strong>비고</strong> (선택)</li>
+                </ol>
+                <p><strong>예시:</strong></p>
+                <code>홍길동,프로젝트 기획서 작성,2024-01-15,긴급,기획팀,초안 먼저 작성</code>
+              </div>
+            </details>
+          </div>
+          
+          <div class="csv-upload-area">
+            <input type="file" id="csv-file-input" accept=".csv" onchange="handleCsvFile(this)">
+            <label for="csv-file-input" class="csv-upload-label">
+              <div class="upload-icon">📁</div>
+              <div class="upload-text">
+                <strong>CSV 파일 선택</strong>
+                <span>또는 파일을 드래그하여 놓으세요</span>
+              </div>
+            </label>
+          </div>
+          
+          <div id="csv-preview" class="csv-preview" style="display: none;">
+            <h4>📊 가져올 데이터 미리보기</h4>
+            <div id="csv-preview-table"></div>
+            <div class="csv-actions">
+              <button type="button" class="btn-import-execute" onclick="executeCsvImport()">✅ 가져오기 실행</button>
+              <button type="button" class="btn-import-cancel" onclick="cancelCsvImport()">❌ 취소</button>
+            </div>
+          </div>
+        </div>
         <form id="taskForm" class="task-form">
           <div class="form-row">
             <div class="form-group">

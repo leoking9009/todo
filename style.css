@@ -301,10 +301,17 @@ body {
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
-.form-container h2 {
+.form-container > h2:not(.form-header h2) {
   margin-bottom: 2rem;
   color: #2d3748;
   font-size: 24px;
+  font-weight: 700;
+}
+
+.form-container .form-header h2 {
+  margin: 0;
+  color: #2d3748;
+  font-size: 1.5rem;
   font-weight: 700;
 }
 
@@ -3109,5 +3116,448 @@ body {
   .btn-diary-delete {
     min-width: 80px;
     height: 40px;
+  }
+}
+
+/* =========================
+   CSV 가져오기 스타일
+   ========================= */
+
+/* 폼 헤더 스타일 */
+.form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #f1f5f9;
+}
+
+.form-header h2 {
+  color: #2d3748;
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.import-section {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.btn-import-csv {
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #48bb78, #38a169);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+  text-decoration: none;
+}
+
+.btn-import-csv:hover {
+  background: linear-gradient(135deg, #38a169, #48bb78);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
+}
+
+/* CSV 가져오기 섹션 */
+.csv-import-section {
+  background: #f8f9ff;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  transition: all 0.3s ease;
+}
+
+.csv-import-section.active {
+  border-color: #4a90e2;
+  background: #f0f7ff;
+}
+
+.csv-import-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.csv-import-header h3 {
+  color: #2d3748;
+  margin: 0 0 0.5rem 0;
+  font-size: 1.3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.csv-import-header p {
+  color: #718096;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+/* 파일 업로드 영역 */
+.csv-upload-area {
+  border: 3px dashed #cbd5e0;
+  border-radius: 12px;
+  padding: 2rem;
+  text-align: center;
+  background: white;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  margin-bottom: 1.5rem;
+}
+
+.csv-upload-area:hover {
+  border-color: #4a90e2;
+  background: #f0f7ff;
+}
+
+.csv-upload-area.dragover {
+  border-color: #38a169;
+  background: #f0fff4;
+  border-style: solid;
+}
+
+.upload-icon {
+  font-size: 3rem;
+  color: #cbd5e0;
+  margin-bottom: 1rem;
+  transition: color 0.3s ease;
+}
+
+.csv-upload-area:hover .upload-icon,
+.csv-upload-area.dragover .upload-icon {
+  color: #4a90e2;
+}
+
+.upload-text {
+  font-size: 1.1rem;
+  color: #4a5568;
+  margin-bottom: 0.5rem;
+}
+
+.upload-subtext {
+  font-size: 0.9rem;
+  color: #718096;
+}
+
+.csv-file-input {
+  display: none;
+}
+
+/* CSV 예시 및 템플릿 */
+.csv-template-section {
+  background: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 1.5rem;
+}
+
+.csv-template-section h4 {
+  color: #2d3748;
+  margin: 0 0 1rem 0;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.csv-example {
+  background: #f7fafc;
+  padding: 1rem;
+  border-radius: 6px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+  color: #2d3748;
+  border-left: 4px solid #4a90e2;
+  margin-bottom: 1rem;
+  white-space: nowrap;
+  overflow-x: auto;
+}
+
+.btn-download-template {
+  padding: 0.6rem 1.2rem;
+  background: #edf2f7;
+  color: #4a5568;
+  border: 1px solid #cbd5e0;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+}
+
+.btn-download-template:hover {
+  background: #e2e8f0;
+  color: #2d3748;
+  border-color: #a0aec0;
+}
+
+/* CSV 데이터 미리보기 */
+.csv-preview-section {
+  margin-top: 2rem;
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid #e2e8f0;
+}
+
+.csv-preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.csv-preview-header h4 {
+  color: #2d3748;
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.preview-count {
+  background: #4a90e2;
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 15px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.csv-preview-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  overflow: hidden;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.csv-preview-table th {
+  background: linear-gradient(135deg, #4a90e2, #357abd);
+  color: white;
+  padding: 0.75rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.csv-preview-table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: top;
+}
+
+.csv-preview-table tbody tr:hover {
+  background: #f8f9ff;
+}
+
+.csv-preview-table tbody tr:nth-child(even) {
+  background: #fafbfc;
+}
+
+/* 에러 및 경고 메시지 */
+.csv-errors,
+.csv-warnings {
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.csv-errors {
+  background: #fed7d7;
+  border: 1px solid #fc8181;
+  color: #742a2a;
+}
+
+.csv-warnings {
+  background: #fefcbf;
+  border: 1px solid #f6e05e;
+  color: #744210;
+}
+
+.csv-errors h5,
+.csv-warnings h5 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.csv-errors ul,
+.csv-warnings ul {
+  margin: 0;
+  padding-left: 1.5rem;
+}
+
+/* 액션 버튼들 */
+.csv-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.btn-csv-import {
+  padding: 0.75rem 2rem;
+  background: linear-gradient(135deg, #4a90e2, #357abd);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-csv-import:hover {
+  background: linear-gradient(135deg, #357abd, #4a90e2);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+}
+
+.btn-csv-import:disabled {
+  background: #cbd5e0;
+  color: #a0aec0;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-csv-cancel {
+  padding: 0.75rem 1.5rem;
+  background: #edf2f7;
+  color: #4a5568;
+  border: 1px solid #cbd5e0;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-csv-cancel:hover {
+  background: #e2e8f0;
+  color: #2d3748;
+  border-color: #a0aec0;
+}
+
+/* 로딩 애니메이션 */
+.csv-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem;
+  color: #4a5568;
+}
+
+.csv-loading .loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e2e8f0;
+  border-top: 4px solid #4a90e2;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* CSV 반응형 디자인 */
+@media (max-width: 768px) {
+  .form-header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+    text-align: center;
+  }
+  
+  .import-section {
+    justify-content: center;
+  }
+  
+  .csv-import-section {
+    padding: 1.5rem;
+  }
+  
+  .csv-upload-area {
+    padding: 1.5rem;
+  }
+  
+  .upload-icon {
+    font-size: 2.5rem;
+  }
+  
+  .csv-template-section {
+    padding: 1rem;
+  }
+  
+  .csv-example {
+    font-size: 0.8rem;
+    padding: 0.75rem;
+  }
+  
+  .csv-actions {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .btn-csv-import,
+  .btn-csv-cancel {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .csv-preview-table {
+    font-size: 0.8rem;
+  }
+  
+  .csv-preview-table th,
+  .csv-preview-table td {
+    padding: 0.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .csv-import-header h3 {
+    font-size: 1.1rem;
+  }
+  
+  .csv-import-header p {
+    font-size: 0.9rem;
+  }
+  
+  .upload-text {
+    font-size: 1rem;
+  }
+  
+  .upload-subtext {
+    font-size: 0.8rem;
+  }
+  
+  .btn-import-csv {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.85rem;
   }
 }
