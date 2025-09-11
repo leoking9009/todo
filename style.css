@@ -2970,8 +2970,11 @@ body {
   border: 2px solid #e9ecef;
   border-radius: 12px;
   padding: 1.5rem;
-  cursor: pointer;
   transition: all 0.3s ease;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
 }
 
 .diary-item:hover {
@@ -2979,6 +2982,58 @@ body {
   border-color: var(--primary-color);
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.diary-content {
+  flex: 1;
+  cursor: pointer;
+}
+
+.diary-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.btn-diary-edit,
+.btn-diary-delete {
+  padding: 0.5rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 36px;
+}
+
+.btn-diary-edit {
+  background: linear-gradient(135deg, #ed8936, #dd6b20);
+  color: white;
+}
+
+.btn-diary-edit:hover {
+  background: linear-gradient(135deg, #dd6b20, #ed8936);
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(237, 137, 54, 0.3);
+}
+
+.btn-diary-delete {
+  background: linear-gradient(135deg, #e53e3e, #c53030);
+  color: white;
+}
+
+.btn-diary-delete:hover {
+  background: linear-gradient(135deg, #c53030, #e53e3e);
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(229, 62, 62, 0.3);
+}
+
+.btn-diary-edit i,
+.btn-diary-delete i {
+  font-size: 0.9rem;
 }
 
 .diary-date {
@@ -3041,5 +3096,18 @@ body {
   
   .diary-item {
     padding: 1rem;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .diary-actions {
+    justify-content: center;
+    margin-top: 1rem;
+  }
+  
+  .btn-diary-edit,
+  .btn-diary-delete {
+    min-width: 80px;
+    height: 40px;
   }
 }

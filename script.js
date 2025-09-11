@@ -2840,11 +2840,21 @@ function displayRecentDiaries(diaries) {
       (diary.growth_diary.length > 50 ? diary.growth_diary.substring(0, 50) + '...' : diary.growth_diary) : '';
 
     return `
-      <div class="diary-item" onclick="loadDiary('${diary.diary_date}')">
-        <div class="diary-date">${date}</div>
-        <div class="diary-exercise">🚴‍♂️ ${exerciseIcon}</div>
-        ${emotionPreview ? `<div class="diary-preview"><strong>감정:</strong> ${emotionPreview}</div>` : ''}
-        ${growthPreview ? `<div class="diary-preview"><strong>성장:</strong> ${growthPreview}</div>` : ''}
+      <div class="diary-item">
+        <div class="diary-content" onclick="loadDiary('${diary.diary_date}')">
+          <div class="diary-date">${date}</div>
+          <div class="diary-exercise">🚴‍♂️ ${exerciseIcon}</div>
+          ${emotionPreview ? `<div class="diary-preview"><strong>감정:</strong> ${emotionPreview}</div>` : ''}
+          ${growthPreview ? `<div class="diary-preview"><strong>성장:</strong> ${growthPreview}</div>` : ''}
+        </div>
+        <div class="diary-actions">
+          <button class="btn-diary-edit" onclick="editSpecificDiary('${diary.diary_date}')" title="수정">
+            <i class="fas fa-edit"></i>
+          </button>
+          <button class="btn-diary-delete" onclick="deleteSpecificDiary('${diary.diary_date}')" title="삭제">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
       </div>
     `;
   }).join('');
@@ -2917,6 +2927,95 @@ async function deleteCurrentDiary() {
       
       // 폼 초기화
       resetDiaryForm();
+      
+      // 최근 일지 목록 새로고침
+      loadRecentDiaries();
+    } else {
+      alert('일지 삭제 중 오류가 발생했습니다: ' + (result.message || '알 수 없는 오류'));
+      console.error('서버 오류 응답:', result);
+    }
+  } catch (error) {
+    console.error('일지 삭제 오류:', error);
+    alert('일지 삭제 중 네트워크 오류가 발생했습니다: ' + error.message);
+  }
+}
+
+// 특정 날짜 일지 수정 함수
+async function editSpecificDiary(date) {
+  if (!currentUser) {
+    alert('로그인이 필요합니다.');
+    return;
+  }
+
+  // 클릭 이벤트 버블링 방지
+  event.stopPropagation();
+
+  try {
+    const response = await fetch(`${API_BASE}/diary?user_id=${currentUser.id}&date=${date}`);
+    const result = await response.json();
+
+    if (result.success && result.data) {
+      const diary = result.data;
+      
+      // 폼에 데이터 로드
+      document.getElementById('diary-date').value = diary.diary_date;
+      document.getElementById('exercise-check').checked = diary.exercise_completed;
+      document.getElementById('emotion-diary').value = diary.emotion_diary || '';
+      document.getElementById('growth-diary').value = diary.growth_diary || '';
+      
+      // 편집 모드로 설정
+      currentDiaryId = diary.id;
+      isEditingDiary = true;
+      updateDiaryFormButtons();
+      
+      // 폼으로 스크롤
+      document.getElementById('diaryForm').scrollIntoView({ behavior: 'smooth' });
+      
+      console.log(`${date} 일지를 편집 모드로 불러왔습니다.`);
+    } else {
+      alert('일지를 불러오는데 실패했습니다.');
+    }
+  } catch (error) {
+    console.error('일지 불러오기 오류:', error);
+    alert('일지 불러오기 중 오류가 발생했습니다.');
+  }
+}
+
+// 특정 날짜 일지 삭제 함수
+async function deleteSpecificDiary(date) {
+  if (!currentUser) {
+    alert('로그인이 필요합니다.');
+    return;
+  }
+
+  // 클릭 이벤트 버블링 방지
+  event.stopPropagation();
+
+  const confirmDelete = confirm(`${new Date(date).toLocaleDateString('ko-KR')} 일지를 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`);
+  
+  if (!confirmDelete) return;
+
+  try {
+    const response = await fetch(`${API_BASE}/diary`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        user_id: currentUser.id,
+        diary_date: date
+      })
+    });
+
+    const result = await response.json();
+    
+    if (result.success) {
+      console.log('일지가 성공적으로 삭제되었습니다.');
+      
+      // 현재 편집 중인 일지가 삭제된 경우 폼 초기화
+      if (currentDiaryId && document.getElementById('diary-date').value === date) {
+        resetDiaryForm();
+      }
       
       // 최근 일지 목록 새로고침
       loadRecentDiaries();
