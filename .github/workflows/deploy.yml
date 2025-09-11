@@ -1,0 +1,16 @@
+name: Notify Netlify on Push
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  notify-netlify:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Trigger Netlify Deploy
+      run: |
+        echo "GitHub repository updated!"
+        echo "Netlify will automatically deploy the changes"
+        echo "Site URL: https://leoking9009.netlify.app"
