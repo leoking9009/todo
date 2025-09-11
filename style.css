@@ -124,6 +124,22 @@ body {
   padding: 0 2rem;
 }
 
+.dashboard-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.dashboard-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #2d3748;
+  margin: 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -137,12 +153,43 @@ body {
   padding: 2rem;
   text-align: center;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  transition: left 0.5s;
 }
 
 .stat-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.stat-card.clickable {
+  cursor: pointer;
+}
+
+.stat-card.clickable:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.stat-card.clickable:hover::before {
+  left: 100%;
+}
+
+.stat-card.clickable:active {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
 }
 
 .stat-card h3 {
@@ -158,10 +205,22 @@ body {
   margin-bottom: 10px;
 }
 
+.stat-subtitle {
+  font-size: 12px;
+  color: #a0aec0;
+  font-weight: 500;
+  margin-top: 5px;
+}
+
 .stat-card.total .stat-number { color: #3182ce; }
 .stat-card.completed .stat-number { color: #38a169; }
 .stat-card.pending .stat-number { color: #ed8936; }
 .stat-card.urgent .stat-number { color: #e53e3e; }
+
+.stat-card.total.clickable:hover { border-left: 4px solid #3182ce; }
+.stat-card.completed.clickable:hover { border-left: 4px solid #38a169; }
+.stat-card.pending.clickable:hover { border-left: 4px solid #ed8936; }
+.stat-card.urgent.clickable:hover { border-left: 4px solid #e53e3e; }
 
 /* 네비게이션 탭 */
 .nav-tabs {

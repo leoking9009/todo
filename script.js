@@ -509,6 +509,27 @@ function switchTab(tabName) {
   refreshCurrentTab();
 }
 
+// 대시보드 통계 카드에서 탭으로 이동
+function navigateToTab(tabName) {
+  // 대시보드의 카드 클릭 효과 추가
+  const clickedCard = document.querySelector(`[data-tab="${tabName}"]`);
+  if (clickedCard) {
+    clickedCard.style.transform = 'scale(0.95)';
+    setTimeout(() => {
+      clickedCard.style.transform = 'scale(1)';
+    }, 150);
+  }
+  
+  // 탭 전환
+  switchTab(tabName);
+  
+  // 탭이 전환되었음을 사용자에게 알려주는 시각적 피드백
+  const targetTab = document.getElementById(`tab-${tabName}`);
+  if (targetTab) {
+    targetTab.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
 // 유틸리티 함수들
 function escapeHtml(text) {
   const div = document.createElement('div');
@@ -1747,6 +1768,7 @@ window.closeEditModal = closeEditModal;
 window.toggleAssigneeView = toggleAssigneeView;
 window.goToPreviousMonth = goToPreviousMonth;
 window.goToNextMonth = goToNextMonth;
+window.navigateToTab = navigateToTab;
 
 // PWA 관련 변수
 let deferredPrompt;

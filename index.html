@@ -81,22 +81,29 @@
 
     <!-- 대시보드 (전광판) -->
     <div id="dashboard" class="dashboard">
+      <div class="dashboard-header">
+        <h2 class="dashboard-title">📊 과제통계</h2>
+      </div>
       <div class="stats-grid">
-        <div class="stat-card total">
+        <div class="stat-card total clickable" data-tab="all" onclick="navigateToTab('all')">
           <h3>전체 과제</h3>
           <div class="stat-number" id="totalTasks">0</div>
+          <div class="stat-subtitle">모든 과제 보기</div>
         </div>
-        <div class="stat-card completed">
+        <div class="stat-card completed clickable" data-tab="completed" onclick="navigateToTab('completed')">
           <h3>완료 과제</h3>
           <div class="stat-number" id="completedTasks">0</div>
+          <div class="stat-subtitle">완료된 과제</div>
         </div>
-        <div class="stat-card pending">
+        <div class="stat-card pending clickable" onclick="navigateToTab('all')">
           <h3>진행 중</h3>
           <div class="stat-number" id="pendingTasks">0</div>
+          <div class="stat-subtitle">진행 중인 과제</div>
         </div>
-        <div class="stat-card urgent">
+        <div class="stat-card urgent clickable" data-tab="urgent" onclick="navigateToTab('urgent')">
           <h3>긴급 과제</h3>
           <div class="stat-number" id="urgentTasks">0</div>
+          <div class="stat-subtitle">긴급 처리 필요</div>
         </div>
       </div>
     </div>
