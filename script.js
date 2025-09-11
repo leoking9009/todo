@@ -42,19 +42,14 @@ function showApp() {
   // 사용자 프로필 업데이트
   const userProfile = document.getElementById('user-profile');
   
-  // 프로필 이미지 생성
+  // 프로필 이미지만 생성
   const profileImg = document.createElement('img');
   profileImg.src = currentUser.picture;
   profileImg.alt = '프로필 사진';
   
-  // 환영 메시지 생성
-  const welcomeMsg = document.createElement('p');
-  welcomeMsg.textContent = currentUser.email + '님 환영합니다!';
-  
-  // 프로필 영역에 추가
+  // 프로필 영역에 이미지만 추가
   userProfile.innerHTML = '';
   userProfile.appendChild(profileImg);
-  userProfile.appendChild(welcomeMsg);
 }
 
 // 로그아웃 처리
