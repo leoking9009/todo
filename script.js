@@ -3097,21 +3097,73 @@ function parseCsvData(csvText) {
       // CSV 필드 파싱 (따옴표 처리 포함)
       const fields = parseCSVLine(line);
       
+      console.log(`${i + 1}번째 줄 파싱 결과:`, fields);
+      
       if (fields.length < 3) {
-        throw new Error(`${i + 1}번째 줄: 최소 3개 필드(담당자, 과제명, 마감기한)가 필요합니다.`);
+        throw new Error(`${i + 1}번째 줄: 최소 3개 필드(담당자, 과제명, 마감기한)가 필요합니다. 현재 ${fields.length}개 필드: [${fields.join(', ')}]`);
       }
       
-      const [assignee, taskName, deadline, urgent, submissionTarget, notes] = fields;
+      // 필드 매핑을 더 유연하게 처리
+      let assignee, taskName, deadline, urgent, submissionTarget, notes;
+      
+      // 필드 수에 따라 다르게 처리
+      if (fields.length >= 6) {
+        // 6개 이상: 담당자, 과제명, 마감기한, 긴급여부, 제출처, 비고
+        [assignee, taskName, deadline, urgent, submissionTarget, notes] = fields;
+      } else if (fields.length >= 4) {
+        // 4-5개: 담당자, 과제명, 마감기한, 긴급여부, (제출처/비고)
+        [assignee, taskName, deadline, urgent, submissionTarget] = fields;
+        notes = fields[5] || '';
+      } else {
+        // 3개: 담당자, 과제명, 마감기한
+        [assignee, taskName, deadline] = fields;
+        urgent = '';
+        submissionTarget = '';
+        notes = '';
+      }
       
       // 필수 필드 검증
       if (!assignee || !taskName || !deadline) {
-        throw new Error(`${i + 1}번째 줄: 담당자, 과제명, 마감기한은 필수입니다.`);
+        throw new Error(`${i + 1}번째 줄: 담당자, 과제명, 마감기한은 필수입니다. (담당자: "${assignee}", 과제명: "${taskName}", 마감기한: "${deadline}")`);
+      }
+      
+      console.log(`${i + 1}번째 줄 필드 매핑:`, {assignee, taskName, deadline, urgent, submissionTarget, notes});
+      
+      // 마감기한이 날짜가 아니라 다른 데이터인지 확인 (긴급여부 등)
+      if (deadline && (deadline.toLowerCase().includes('긴급') || deadline.toLowerCase().includes('urgent') || deadline.toLowerCase() === 'y' || deadline.toLowerCase() === 'n')) {
+        // 필드 순서가 잘못된 것 같으므로 자동 재매핑 시도
+        console.warn(`${i + 1}번째 줄: 마감기한 위치에 "${deadline}"가 있어 필드 순서를 재매핑합니다.`);
+        
+        // 다른 매핑 시도: 담당자, 과제명, 긴급여부, 마감기한 순서일 수도 있음
+        if (fields.length >= 4) {
+          const reorderedFields = [fields[0], fields[1], fields[3], fields[2], fields[4], fields[5]];
+          [assignee, taskName, deadline, urgent, submissionTarget, notes] = reorderedFields;
+          console.log(`${i + 1}번째 줄 재매핑 결과:`, {assignee, taskName, deadline, urgent, submissionTarget, notes});
+        }
       }
       
       // 날짜 형식 검증 및 변환
       if (!isValidDate(deadline)) {
-        throw new Error(`${i + 1}번째 줄: 마감기한이 올바른 날짜 형식이 아닙니다. (입력값: "${deadline}")
-지원 형식: YYYY-MM-DD, YYYY/MM/DD, YYYY.MM.DD, MM/DD/YYYY, DD/MM/YYYY`);
+        // 필드에서 날짜 같은 것을 찾아보기
+        let foundDateField = null;
+        let dateFieldIndex = -1;
+        
+        for (let j = 0; j < fields.length; j++) {
+          if (isValidDate(fields[j])) {
+            foundDateField = fields[j];
+            dateFieldIndex = j;
+            break;
+          }
+        }
+        
+        if (foundDateField) {
+          console.warn(`${i + 1}번째 줄: ${dateFieldIndex + 1}번째 필드에서 유효한 날짜를 발견했습니다: "${foundDateField}"`);
+          deadline = foundDateField;
+        } else {
+          throw new Error(`${i + 1}번째 줄: 마감기한이 올바른 날짜 형식이 아닙니다. (입력값: "${deadline}")
+전체 필드: [${fields.join(', ')}]
+지원 형식: YYYY-MM-DD, YYYY/MM/DD, YYYY.MM.DD, MM/DD/YYYY, DD/MM/YYYY, 2024년 12월 25일`);
+        }
       }
       
       // 날짜를 표준 ISO 형식으로 변환
