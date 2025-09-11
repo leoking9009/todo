@@ -3379,6 +3379,16 @@ function parseCsvData(csvText) {
   } catch (error) {
     alert('CSV 파일 파싱 오류: ' + error.message);
     console.error('CSV 파싱 오류:', error);
+    
+    // 오류가 발생해도 가능한 데이터가 있다면 미리보기 표시
+    if (data.length > 0) {
+      csvParsedData = data;
+      displayCsvPreview(data);
+    } else {
+      // 데이터가 없으면 미리보기 숨기기
+      const previewDiv = document.getElementById('csv-preview');
+      previewDiv.style.display = 'none';
+    }
   }
 }
 
