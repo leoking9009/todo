@@ -21,6 +21,9 @@ async function handleCredentialResponse(response) {
       picture: payload.picture
     };
 
+    // 사용자 정보를 localStorage에 저장 (세션 유지)
+    saveUserSession(currentUser);
+
     // 로그인 성공 처리
     showApp();
     await loadDashboard();
@@ -48,6 +51,10 @@ function showApp() {
 function logout() {
   currentUser = null;
   allTasks = [];
+  
+  // localStorage에서 사용자 세션 제거
+  clearUserSession();
+  
   document.getElementById('login-container').style.display = 'block';
   document.getElementById('app-container').style.display = 'none';
   
@@ -57,9 +64,90 @@ function logout() {
   }
 }
 
+// 세션 관리 함수들
+function saveUserSession(user) {
+  try {
+    const sessionData = {
+      user: user,
+      timestamp: Date.now(),
+      expires: Date.now() + (7 * 24 * 60 * 60 * 1000) // 7일 후 만료
+    };
+    localStorage.setItem('todoAppSession', JSON.stringify(sessionData));
+    console.log('사용자 세션이 저장되었습니다:', user.name);
+  } catch (error) {
+    console.error('세션 저장 중 오류:', error);
+  }
+}
+
+function loadUserSession() {
+  try {
+    const sessionData = localStorage.getItem('todoAppSession');
+    if (!sessionData) {
+      return null;
+    }
+    
+    const session = JSON.parse(sessionData);
+    
+    // 세션 만료 확인
+    if (Date.now() > session.expires) {
+      console.log('세션이 만료되었습니다.');
+      clearUserSession();
+      return null;
+    }
+    
+    console.log('저장된 세션을 불러왔습니다:', session.user.name);
+    return session.user;
+  } catch (error) {
+    console.error('세션 로드 중 오류:', error);
+    clearUserSession();
+    return null;
+  }
+}
+
+function clearUserSession() {
+  try {
+    localStorage.removeItem('todoAppSession');
+    console.log('사용자 세션이 삭제되었습니다.');
+  } catch (error) {
+    console.error('세션 삭제 중 오류:', error);
+  }
+}
+
+function isSessionValid() {
+  try {
+    const sessionData = localStorage.getItem('todoAppSession');
+    if (!sessionData) {
+      return false;
+    }
+    
+    const session = JSON.parse(sessionData);
+    return Date.now() < session.expires;
+  } catch (error) {
+    return false;
+  }
+}
+
+function updateSessionExpiry() {
+  try {
+    const sessionData = localStorage.getItem('todoAppSession');
+    if (sessionData) {
+      const session = JSON.parse(sessionData);
+      session.expires = Date.now() + (7 * 24 * 60 * 60 * 1000); // 7일 연장
+      localStorage.setItem('todoAppSession', JSON.stringify(session));
+    }
+  } catch (error) {
+    console.error('세션 갱신 중 오류:', error);
+  }
+}
+
 // 대시보드 로드
 async function loadDashboard() {
   try {
+    // 사용자 활동으로 세션 갱신
+    if (currentUser) {
+      updateSessionExpiry();
+    }
+    
     // 통계 데이터 가져오기
     const statsResponse = await fetch(`${API_BASE}/stats`);
     const stats = await statsResponse.json();
@@ -2210,8 +2298,29 @@ function getDetailedInstallInstructions() {
   }
 }
 
+// 페이지 로드 시 자동 로그인 체크
+async function checkAutoLogin() {
+  console.log('자동 로그인 체크 중...');
+  
+  const savedUser = loadUserSession();
+  if (savedUser) {
+    console.log('저장된 사용자 세션 발견:', savedUser.name);
+    currentUser = savedUser;
+    showApp();
+    await loadDashboard();
+  } else {
+    console.log('저장된 세션이 없거나 만료됨');
+    // 로그인 화면 유지
+    document.getElementById('login-container').style.display = 'block';
+    document.getElementById('app-container').style.display = 'none';
+  }
+}
+
 // DOMContentLoaded 이벤트에 게시판 이벤트 리스너 추가
 document.addEventListener('DOMContentLoaded', function() {
+  // 자동 로그인 체크 (최우선)
+  checkAutoLogin();
+  
   // 기존 이벤트 리스너들...
   
   // 로그아웃 버튼
