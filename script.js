@@ -14,18 +14,30 @@ async function handleCredentialResponse(response) {
     // JWT 토큰 디코딩 (간단한 파싱)
     const payload = JSON.parse(atob(idToken.split('.')[1]));
     
-    // 허용된 이메일 주소 확인
+    // 허용된 이메일 주소 확인 (강화된 검증)
     const allowedEmail = 'leo9009@gmail.com';
-    if (payload.email !== allowedEmail) {
-      console.log('접근 거부:', payload.email);
-      alert('접근이 제한되었습니다. 승인된 계정으로만 로그인할 수 있습니다.');
+    const userEmail = payload.email ? payload.email.toLowerCase().trim() : '';
+    
+    console.log('로그인 시도:', userEmail);
+    
+    if (userEmail !== allowedEmail) {
+      console.error('🚫 접근 거부 - 허가되지 않은 계정:', userEmail);
+      alert(`접근이 제한되었습니다.\n허가된 계정: ${allowedEmail}\n시도한 계정: ${userEmail}\n\n관리자에게 문의하세요.`);
       
-      // 구글 로그인 상태 초기화
+      // 구글 로그인 상태 완전 초기화
       if (typeof google !== 'undefined' && google.accounts) {
         google.accounts.id.disableAutoSelect();
+        google.accounts.id.cancel();
       }
+      
+      // 페이지 새로고침으로 완전 초기화
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
       return;
     }
+    
+    console.log('✅ 로그인 허가:', userEmail);
     
     currentUser = {
       id: payload.sub,
@@ -162,8 +174,18 @@ function updateSessionExpiry() {
 // 대시보드 로드
 async function loadDashboard() {
   try {
-    // 사용자 활동으로 세션 갱신
+    // 사용자 권한 재검증
     if (currentUser) {
+      const allowedEmail = 'leo9009@gmail.com';
+      const userEmail = currentUser.email ? currentUser.email.toLowerCase().trim() : '';
+      
+      if (userEmail !== allowedEmail) {
+        console.error('🚫 권한 없는 사용자 감지 - 강제 로그아웃:', userEmail);
+        logout();
+        alert('권한이 없는 계정입니다. 로그아웃됩니다.');
+        return;
+      }
+      
       updateSessionExpiry();
     }
     
@@ -2325,13 +2347,22 @@ async function checkAutoLogin() {
   
   const savedUser = loadUserSession();
   if (savedUser) {
-    // 허용된 이메일 주소 확인
+    // 허용된 이메일 주소 확인 (강화된 검증)
     const allowedEmail = 'leo9009@gmail.com';
-    if (savedUser.email !== allowedEmail) {
-      console.log('접근 거부 - 저장된 세션:', savedUser.email);
-      clearUserSession(); // 허가되지 않은 세션 삭제
+    const userEmail = savedUser.email ? savedUser.email.toLowerCase().trim() : '';
+    
+    if (userEmail !== allowedEmail) {
+      console.error('🚫 자동 로그인 차단 - 허가되지 않은 세션:', userEmail);
+      clearUserSession(); // 허가되지 않은 세션 완전 삭제
+      
+      // 로컬스토리지 완전 정리
+      localStorage.clear();
+      
+      // 로그인 화면으로 강제 이동
       document.getElementById('login-container').style.display = 'block';
       document.getElementById('app-container').style.display = 'none';
+      
+      alert(`저장된 세션이 허가되지 않았습니다.\n허가된 계정: ${allowedEmail}\n저장된 계정: ${userEmail}`);
       return;
     }
     
