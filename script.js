@@ -43,7 +43,7 @@ function showApp() {
   const userProfile = document.getElementById('user-profile');
   userProfile.innerHTML = `
     <img src="${currentUser.picture}" alt="프로필 사진">
-    <p>${currentUser.name}님 환영합니다!</p>
+    <p>${currentUser.email}님 환영합니다!</p>
   `;
 }
 
