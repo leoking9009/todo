@@ -3130,8 +3130,16 @@ function parseCsvData(csvText) {
       
       console.log(`${i + 1}번째 줄 파싱 결과:`, fields);
       
-      if (fields.length < 3) {
-        throw new Error(`${i + 1}번째 줄: 최소 3개 필드(담당자, 과제명, 마감기한)가 필요합니다. 현재 ${fields.length}개 필드: [${fields.join(', ')}]`);
+      // 빈 줄이거나 모든 필드가 비어있는 경우 건너뛰기
+      const nonEmptyFields = fields.filter(field => field && field.trim());
+      if (nonEmptyFields.length === 0) {
+        console.log(`${i + 1}번째 줄: 빈 줄이므로 건너뜁니다.`);
+        continue;
+      }
+      
+      if (fields.length < 2) {
+        console.warn(`${i + 1}번째 줄: 필드가 너무 적습니다 (${fields.length}개). 건너뜁니다. 필드: [${fields.join(', ')}]`);
+        continue;
       }
       
       // 필드 매핑을 더 유연하게 처리
@@ -3172,9 +3180,40 @@ function parseCsvData(csvText) {
         console.log(`${i + 1}번째 줄 순서 기반 매핑:`, {assignee, taskName, deadline, urgent, submissionTarget, notes});
       }
       
+      // 빈 필드 처리
+      assignee = assignee ? assignee.trim() : '';
+      taskName = taskName ? taskName.trim() : '';
+      deadline = deadline ? deadline.trim() : '';
+      urgent = urgent ? urgent.trim() : '';
+      submissionTarget = submissionTarget ? submissionTarget.trim() : '';
+      notes = notes ? notes.trim() : '';
+      
+      // 마감기한이 비어있으면 다른 필드에서 날짜를 찾아보기
+      if (!deadline) {
+        console.warn(`${i + 1}번째 줄: 마감기한이 비어있습니다. 다른 필드에서 날짜를 찾습니다.`);
+        
+        // 모든 필드에서 날짜 형식을 찾기
+        for (let j = 0; j < fields.length; j++) {
+          if (fields[j] && isValidDate(fields[j].trim())) {
+            deadline = fields[j].trim();
+            console.log(`${i + 1}번째 줄: ${j + 1}번째 필드에서 날짜를 발견했습니다: "${deadline}"`);
+            break;
+          }
+        }
+        
+        // 여전히 날짜가 없으면 기본값 설정
+        if (!deadline) {
+          const today = new Date();
+          const oneMonthLater = new Date(today);
+          oneMonthLater.setMonth(today.getMonth() + 1);
+          deadline = oneMonthLater.toISOString().split('T')[0];
+          console.warn(`${i + 1}번째 줄: 날짜를 찾을 수 없어 1개월 후로 설정합니다: ${deadline}`);
+        }
+      }
+      
       // 필수 필드 검증
-      if (!assignee || !taskName || !deadline) {
-        throw new Error(`${i + 1}번째 줄: 담당자, 과제명, 마감기한은 필수입니다. (담당자: "${assignee}", 과제명: "${taskName}", 마감기한: "${deadline}")`);
+      if (!assignee || !taskName) {
+        throw new Error(`${i + 1}번째 줄: 담당자, 과제명은 필수입니다. (담당자: "${assignee}", 과제명: "${taskName}", 마감기한: "${deadline}")`);
       }
       
       console.log(`${i + 1}번째 줄 필드 매핑:`, {assignee, taskName, deadline, urgent, submissionTarget, notes});
@@ -3647,11 +3686,16 @@ async function executeCsvImport() {
     }
     
     // 결과 표시
-    let resultMessage = `CSV 가져오기 완료!\n성공: ${successCount}개\n실패: ${failCount}개`;
+    let resultMessage = `📊 CSV 가져오기 완료!\n\n✅ 성공: ${successCount}개\n❌ 실패: ${failCount}개`;
+    
+    if (successCount > 0) {
+      resultMessage += '\n\n🎉 성공적으로 등록된 과제들을 확인해보세요!';
+    }
+    
     if (errors.length > 0 && errors.length <= 5) {
-      resultMessage += '\n\n오류 내용:\n' + errors.join('\n');
+      resultMessage += '\n\n⚠️ 오류 내용:\n' + errors.join('\n');
     } else if (errors.length > 5) {
-      resultMessage += '\n\n오류가 너무 많습니다. 콘솔을 확인해주세요.';
+      resultMessage += '\n\n⚠️ 오류가 너무 많습니다. 콘솔(F12)을 확인해주세요.';
       console.error('CSV 가져오기 오류들:', errors);
     }
     
