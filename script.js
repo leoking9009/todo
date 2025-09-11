@@ -563,7 +563,8 @@ async function submitTask(event) {
       // 데이터 새로고침
       await loadDashboard();
       
-      alert('과제가 성공적으로 등록되었습니다!');
+      // 성공 알림 제거 - 조용한 성공 처리
+      console.log('과제가 성공적으로 등록되었습니다.');
     } else {
       throw new Error('과제 등록에 실패했습니다.');
     }
@@ -856,7 +857,8 @@ async function submitEditTask(event) {
     if (response.ok) {
       closeEditModal();
       await loadDashboard();
-      alert('과제가 성공적으로 수정되었습니다!');
+      // 성공 알림 제거 - 조용한 성공 처리
+      console.log('과제가 성공적으로 수정되었습니다.');
     } else {
       throw new Error('과제 수정에 실패했습니다.');
     }
@@ -1287,7 +1289,8 @@ async function createBoardPost(postData) {
       // 게시글 목록 다시 로드
       await loadBoardPosts(currentBoardCategory, '', currentBoardPage);
       
-      alert('게시글이 성공적으로 작성되었습니다!');
+      // 성공 알림 제거 - 조용한 성공 처리
+      console.log('게시글이 성공적으로 작성되었습니다.');
     } else {
       alert('게시글 작성 중 오류가 발생했습니다: ' + result.message);
     }
@@ -1348,7 +1351,8 @@ async function updateBoardPost(postData) {
       // 게시글 목록 다시 로드
       await loadBoardPosts(currentBoardCategory, '', currentBoardPage);
       
-      alert('게시글이 성공적으로 수정되었습니다!');
+      // 성공 알림 제거 - 조용한 성공 처리
+      console.log('게시글이 성공적으로 수정되었습니다.');
     } else {
       alert('게시글 수정 중 오류가 발생했습니다: ' + result.message);
     }
@@ -1394,7 +1398,8 @@ async function deletePost(postId) {
       // 게시글 목록 다시 로드
       await loadBoardPosts(currentBoardCategory, '', currentBoardPage);
       
-      alert('게시글이 성공적으로 삭제되었습니다!');
+      // 성공 알림 제거 - 조용한 성공 처리
+      console.log('게시글이 성공적으로 삭제되었습니다.');
     } else {
       alert('게시글 삭제 중 오류가 발생했습니다: ' + result.message);
     }
@@ -2011,7 +2016,7 @@ async function exportToExcel() {
       document.body.removeChild(link);
       
       console.log('엑셀 내보내기 완료');
-      alert(`데이터가 성공적으로 내보내졌습니다.\n파일명: 업무관리_백업_${dateStr}.csv\n\n포함된 데이터:\n- 과제: ${tasks.length}개\n- TODO: ${todoData.length}개\n- 게시판: ${boardData.length}개`);
+      console.log(`데이터가 성공적으로 내보내졌습니다. 파일명: 업무관리_백업_${dateStr}.csv, 포함된 데이터: 과제 ${tasks.length}개, TODO ${todoData.length}개, 게시판 ${boardData.length}개`);
     }
 
   } catch (error) {
@@ -2233,9 +2238,9 @@ function setupPWAInstallPrompt() {
     hidePWAInstallPrompt();
     showPWAInstalledStatus();
     
-    // 감사 메시지 표시
+    // 감사 메시지 로그로 변경
     setTimeout(() => {
-      alert('앱이 성공적으로 설치되었습니다! 홈 화면에서 바로 접근할 수 있습니다.');
+      console.log('앱이 성공적으로 설치되었습니다! 홈 화면에서 바로 접근할 수 있습니다.');
     }, 1000);
   });
   
@@ -2273,9 +2278,9 @@ function installPWA() {
   } else {
     // iOS Safari용 안내
     if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-      alert('Safari에서 공유 버튼을 눌러 "홈 화면에 추가"를 선택해주세요.');
+      console.log('Safari에서 공유 버튼을 눌러 "홈 화면에 추가"를 선택해주세요.');
     } else {
-      alert('브라우저 설정에서 "홈 화면에 추가" 또는 "앱 설치"를 선택해주세요.');
+      console.log('브라우저 설정에서 "홈 화면에 추가" 또는 "앱 설치"를 선택해주세요.');
     }
   }
 }
@@ -2442,7 +2447,7 @@ function showManualInstallGuide() {
     // 새로운 이벤트 리스너 추가
     document.getElementById('manual-install-btn')?.addEventListener('click', () => {
       console.log('ℹ️ 자세한 설치 방법 요청됨');
-      alert(getDetailedInstallInstructions());
+      console.log('설치 가이드:', getDetailedInstallInstructions());
     });
     
     document.getElementById('manual-dismiss-btn')?.addEventListener('click', () => {
