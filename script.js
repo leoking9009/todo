@@ -2673,11 +2673,12 @@ async function submitDiary() {
       setDefaultDiaryDateToToday();
       loadRecentDiaries();
     } else {
-      alert('일지 저장 중 오류가 발생했습니다: ' + result.message);
+      alert('일지 저장 중 오류가 발생했습니다: ' + (result.message || result.details || '알 수 없는 오류'));
+      console.error('서버 오류 응답:', result);
     }
   } catch (error) {
     console.error('일지 저장 오류:', error);
-    alert('일지 저장 중 오류가 발생했습니다.');
+    alert('일지 저장 중 네트워크 오류가 발생했습니다: ' + error.message);
   }
 }
 
