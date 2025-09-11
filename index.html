@@ -200,22 +200,35 @@
             </div>
           </div>
           <div class="form-row">
-            <div class="form-group">
-              <label for="submissionTarget">제출처</label>
-              <input type="text" id="submissionTarget" name="submissionTarget" placeholder="제출처를 입력하세요">
-            </div>
-            <div class="form-group">
-              <label for="deadline">마감기한 *</label>
-              <input type="date" id="deadline" name="deadline" required>
-            </div>
-          </div>
-          <div class="form-row">
             <div class="form-group checkbox-group">
               <label class="checkbox-label">
                 <input type="checkbox" id="isUrgent" name="isUrgent">
                 <span class="checkmark"></span>
-                긴급 과제
+                긴급여부
               </label>
+            </div>
+            <div class="form-group">
+              <label for="createdDate">생성일시</label>
+              <input type="date" id="createdDate" name="createdDate" readonly>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="deadline">마감일 *</label>
+              <input type="date" id="deadline" name="deadline" required>
+            </div>
+            <div class="form-group checkbox-group">
+              <label class="checkbox-label">
+                <input type="checkbox" id="isCompleted" name="isCompleted">
+                <span class="checkmark"></span>
+                완료여부
+              </label>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="submissionTarget">제출처</label>
+              <input type="text" id="submissionTarget" name="submissionTarget" placeholder="제출처를 입력하세요">
             </div>
           </div>
           <div class="form-group">

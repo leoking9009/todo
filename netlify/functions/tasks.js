@@ -36,12 +36,12 @@ exports.handler = async (event, context) => {
         };
 
       case 'POST':
-        const { assignee, task_name, is_urgent, submission_target, notes, user_id, deadline } = JSON.parse(event.body);
+        const { assignee, task_name, is_urgent, is_completed, submission_target, notes, user_id, deadline, created_date } = JSON.parse(event.body);
         const insertResult = await client.query(`
-          INSERT INTO tasks (assignee, task_name, is_urgent, submission_target, notes, user_id, deadline)
-          VALUES ($1, $2, $3, $4, $5, $6, $7)
+          INSERT INTO tasks (assignee, task_name, is_urgent, is_completed, submission_target, notes, user_id, deadline, created_date)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, COALESCE($9, CURRENT_DATE))
           RETURNING *
-        `, [assignee, task_name, is_urgent || false, submission_target, notes, user_id, deadline]);
+        `, [assignee, task_name, is_urgent || false, is_completed || false, submission_target, notes, user_id, deadline, created_date]);
         
         return {
           statusCode: 201,

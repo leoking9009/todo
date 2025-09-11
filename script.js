@@ -538,9 +538,11 @@ async function submitTask(event) {
     assignee: formData.get('assignee').trim(),
     task_name: formData.get('taskName').trim(),
     is_urgent: formData.get('isUrgent') === 'on',
+    is_completed: formData.get('isCompleted') === 'on',
     submission_target: formData.get('submissionTarget').trim() || null,
     notes: formData.get('notes').trim() || null,
     deadline: formData.get('deadline'),
+    created_date: formData.get('createdDate'),
     user_id: currentUser.id
   };
   
@@ -562,6 +564,9 @@ async function submitTask(event) {
     if (response.ok) {
       // 폼 초기화
       event.target.reset();
+      
+      // 생성일시와 마감기한 기본값 다시 설정
+      setDefaultDeadlineToToday();
       
       // 데이터 새로고침
       await loadDashboard();
@@ -2671,14 +2676,23 @@ document.addEventListener('DOMContentLoaded', function() {
   // 게시판 이벤트 리스너는 게시판 탭이 활성화될 때 설정됨
 });
 
-// 마감기한 기본값을 오늘 날짜로 설정하는 함수
+// 마감기한 기본값을 오늘 날짜로 설정하고 생성일시 설정하는 함수
 function setDefaultDeadlineToToday() {
+  const today = new Date();
+  const todayString = today.toISOString().split('T')[0];
+  
+  // 마감기한 기본값 설정
   const deadlineInput = document.getElementById('deadline');
   if (deadlineInput) {
-    const today = new Date();
-    const todayString = today.toISOString().split('T')[0];
     deadlineInput.value = todayString;
     console.log('마감기한 기본값을 오늘로 설정:', todayString);
+  }
+  
+  // 생성일시 기본값 설정 (읽기 전용)
+  const createdDateInput = document.getElementById('createdDate');
+  if (createdDateInput) {
+    createdDateInput.value = todayString;
+    console.log('생성일시를 오늘로 설정:', todayString);
   }
 }
 
