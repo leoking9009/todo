@@ -1,9 +1,30 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
-  <title>업무 관리 시스템</title>
   <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>업무 관리 시스템</title>
+  
+  <!-- PWA 매니페스트 -->
+  <link rel="manifest" href="/manifest.json">
+  
+  <!-- PWA 메타 태그 -->
+  <meta name="theme-color" content="#667eea">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="업무관리">
+  <meta name="application-name" content="업무관리">
+  <meta name="msapplication-TileColor" content="#667eea">
+  <meta name="msapplication-config" content="/browserconfig.xml">
+  
+  <!-- 아이콘 링크 -->
+  <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/icons/icon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-192x192.png">
+  <link rel="mask-icon" href="/icons/icon-192x192.png" color="#667eea">
+  
+  <!-- 스타일시트 -->
   <link rel="stylesheet" type="text/css" href="style.css">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -13,7 +34,7 @@
       <h2>업무 관리 시스템</h2>
       <p>구글 계정으로 로그인하여 업무를 관리하세요</p>
       <div id="g_id_onload"
-           data-client_id="1082098382286-oslqtaiu6d0pr1jn7ge836q2vll0ao19.apps.googleusercontent.com"
+           data-client_id="1082098382286-85hnhh8ih779i8o4bs466h8m590rm1bk.apps.googleusercontent.com"
            data-callback="handleCredentialResponse">
       </div>
       <div class="g_id_signin"
@@ -27,12 +48,32 @@
     </div>
   </div>
 
+  <!-- PWA 설치 프롬프트 -->
+  <div id="pwa-install-prompt" class="pwa-install-prompt" style="display: none;">
+    <div class="pwa-prompt-content">
+      <div class="pwa-prompt-icon">📱</div>
+      <div class="pwa-prompt-text">
+        <h3>앱으로 설치하기</h3>
+        <p>홈 화면에 추가하여 더 빠르게 접근하세요!</p>
+      </div>
+      <div class="pwa-prompt-actions">
+        <button id="pwa-install-btn" class="pwa-install-btn">설치</button>
+        <button id="pwa-dismiss-btn" class="pwa-dismiss-btn">나중에</button>
+      </div>
+    </div>
+  </div>
+
   <div id="app-container" style="display:none;">
     <header class="header">
       <div class="header-content">
         <h1>📋 업무 관리 시스템</h1>
         <div class="user-menu">
           <div id="user-profile"></div>
+          <div class="pwa-status">
+            <button id="pwa-install-header-btn" class="pwa-install-header-btn" style="display: none;">
+              <i class="fas fa-download"></i> 앱 설치
+            </button>
+          </div>
           <button id="logoutButton" class="btn-logout">로그아웃</button>
         </div>
       </div>
@@ -63,6 +104,8 @@
     <!-- 네비게이션 탭 -->
     <nav class="nav-tabs">
       <button class="tab-btn active" data-tab="add">➕ 과제 등록</button>
+      <button class="tab-btn" data-tab="board">💬 팀 게시판</button>
+      <button class="tab-btn" data-tab="todo">📝 개인 TODO</button>
       <button class="tab-btn" data-tab="all">📋 전체 과제</button>
       <button class="tab-btn" data-tab="calendar">📅 달력 보기</button>
       <button class="tab-btn" data-tab="today">📅 오늘 과제</button>
@@ -113,6 +156,180 @@
           </div>
           <button type="submit" class="btn-submit">과제 등록</button>
         </form>
+      </div>
+    </div>
+
+    <!-- 팀 게시판 -->
+    <div id="tab-board" class="tab-content">
+      <div class="board-container">
+        <div class="board-header">
+          <h2>💬 팀 소통 게시판</h2>
+          <p>팀원들과 자유롭게 소통하고 정보를 공유해보세요</p>
+        </div>
+
+        <!-- 액션 바 -->
+        <div class="board-action-bar">
+          <div class="search-box">
+            <input type="text" placeholder="게시글을 검색해보세요..." id="board-search">
+            <i class="fas fa-search"></i>
+          </div>
+          
+          <div class="category-filter">
+            <button class="category-btn active" data-category="all">전체</button>
+            <button class="category-btn" data-category="announcement">공지</button>
+            <button class="category-btn" data-category="question">질문</button>
+            <button class="category-btn" data-category="free">자유</button>
+            <button class="category-btn" data-category="suggestion">제안</button>
+          </div>
+
+          <button class="new-post-btn" id="new-post-btn">
+            <i class="fas fa-plus"></i>
+            새 글 작성
+          </button>
+        </div>
+
+        <!-- 게시글 목록 -->
+        <div id="board-posts" class="board-posts">
+          <!-- 게시글이 여기에 동적으로 로드됩니다 -->
+        </div>
+
+        <!-- 게시글 작성 모달 -->
+        <div id="post-modal" class="modal" style="display: none;">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h3>새 글 작성</h3>
+              <button class="close-btn" id="close-modal">&times;</button>
+            </div>
+            <form id="post-form" class="post-form">
+              <div class="form-group">
+                <label for="post-title">제목 *</label>
+                <input type="text" id="post-title" name="title" required placeholder="게시글 제목을 입력하세요">
+              </div>
+              <div class="form-group">
+                <label for="post-category">카테고리 *</label>
+                <select id="post-category" name="category" required>
+                  <option value="">카테고리를 선택하세요</option>
+                  <option value="announcement">공지</option>
+                  <option value="question">질문</option>
+                  <option value="free">자유</option>
+                  <option value="suggestion">제안</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="post-content">내용 *</label>
+                <textarea id="post-content" name="content" required placeholder="게시글 내용을 입력하세요" rows="10"></textarea>
+              </div>
+              <div class="form-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="post-urgent" name="urgent">
+                  <span class="checkmark"></span>
+                  긴급 게시글
+                </label>
+              </div>
+              <div class="modal-actions">
+                <button type="button" class="btn-cancel" id="cancel-post">취소</button>
+                <button type="submit" class="btn-submit">게시글 등록</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- 게시글 수정 모달 -->
+        <div id="edit-post-modal" class="modal" style="display: none;">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h3>게시글 수정</h3>
+              <button class="close-btn" id="close-edit-modal">&times;</button>
+            </div>
+            <form id="edit-post-form" class="post-form">
+              <input type="hidden" id="edit-post-id">
+              <div class="form-group">
+                <label for="edit-post-title">제목 *</label>
+                <input type="text" id="edit-post-title" name="title" required placeholder="게시글 제목을 입력하세요">
+              </div>
+              <div class="form-group">
+                <label for="edit-post-category">카테고리 *</label>
+                <select id="edit-post-category" name="category" required>
+                  <option value="">카테고리를 선택하세요</option>
+                  <option value="announcement">공지</option>
+                  <option value="question">질문</option>
+                  <option value="free">자유</option>
+                  <option value="suggestion">제안</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="edit-post-content">내용 *</label>
+                <textarea id="edit-post-content" name="content" required placeholder="게시글 내용을 입력하세요" rows="10"></textarea>
+              </div>
+              <div class="form-group">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="edit-post-urgent" name="urgent">
+                  <span class="checkmark"></span>
+                  긴급 게시글
+                </label>
+              </div>
+              <div class="modal-actions">
+                <button type="button" class="btn-cancel" id="cancel-edit-post">취소</button>
+                <button type="submit" class="btn-submit">수정 완료</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 개인 TODO -->
+    <div id="tab-todo" class="tab-content">
+      <div class="todo-container">
+        <div class="todo-header">
+          <h2>📝 개인 TODO</h2>
+          <p>개인적인 할 일을 빠르게 메모하고 관리하세요</p>
+        </div>
+
+        <!-- TODO 추가 섹션 -->
+        <div class="todo-add-section">
+          <div class="todo-input-group">
+            <input type="text" id="todo-input" placeholder="할 일을 입력하세요..." maxlength="200">
+            <select id="todo-priority">
+              <option value="low">낮음</option>
+              <option value="medium" selected>보통</option>
+              <option value="high">높음</option>
+            </select>
+            <button id="add-todo-btn" class="btn-add-todo">
+              <i class="fas fa-plus"></i>
+              추가
+            </button>
+          </div>
+        </div>
+
+        <!-- TODO 필터 -->
+        <div class="todo-filters">
+          <button class="todo-filter-btn active" data-filter="all">전체</button>
+          <button class="todo-filter-btn" data-filter="pending">진행중</button>
+          <button class="todo-filter-btn" data-filter="completed">완료</button>
+          <button class="todo-filter-btn" data-filter="high">높은 우선순위</button>
+        </div>
+
+        <!-- TODO 목록 -->
+        <div id="todo-list" class="todo-list">
+          <!-- TODO 항목들이 여기에 동적으로 추가됩니다 -->
+        </div>
+
+        <!-- TODO 통계 -->
+        <div class="todo-stats">
+          <div class="stat-item">
+            <span class="stat-label">전체:</span>
+            <span id="total-todos" class="stat-value">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">완료:</span>
+            <span id="completed-todos" class="stat-value">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">진행중:</span>
+            <span id="pending-todos" class="stat-value">0</span>
+          </div>
+        </div>
       </div>
     </div>
 

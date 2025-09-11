@@ -63,6 +63,31 @@ cp .env.example .env
 npm run dev
 \`\`\`
 
+서버가 시작되면 http://localhost:3000 에서 애플리케이션에 접속할 수 있습니다.
+
+### 5. 데이터베이스 연결 테스트
+\`\`\`bash
+# 데이터베이스 연결 및 테이블 생성 테스트
+node test-db-connection.js
+
+# API 엔드포인트 테스트 (서버가 실행 중일 때)
+node test-local-api.js
+\`\`\`
+
+### 6. API 엔드포인트 테스트 (curl 명령어)
+\`\`\`bash
+# 모든 작업 조회
+curl http://localhost:3000/api/tasks
+
+# 통계 조회
+curl http://localhost:3000/api/stats
+
+# 새 작업 생성
+curl -X POST http://localhost:3000/api/tasks \\
+  -H "Content-Type: application/json" \\
+  -d '{"assignee":"테스트","task_name":"테스트 작업","user_id":"test-user"}'
+\`\`\`
+
 ## Netlify 배포 가이드
 
 ### 1. Neon PostgreSQL 설정

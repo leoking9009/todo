@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PWA 아이콘 생성</title>
+</head>
+<body>
+    <h1>PWA 아이콘 자동 생성</h1>
+    <button onclick="createIcons()">아이콘 생성 및 다운로드</button>
+    <div id="status"></div>
+
+    <script>
+        function createIcons() {
+            const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
+            const status = document.getElementById('status');
+            status.innerHTML = '<p>아이콘 생성 중...</p>';
+            
+            sizes.forEach((size, index) => {
+                setTimeout(() => {
+                    createAndDownloadIcon(size);
+                    status.innerHTML += `<p>✅ ${size}x${size} 아이콘 생성 완료</p>`;
+                    
+                    if (index === sizes.length - 1) {
+                        status.innerHTML += '<p><strong>🎉 모든 아이콘 생성 완료!</strong></p>';
+                        status.innerHTML += '<p>다운로드된 파일들을 icons/ 폴더에 저장해주세요.</p>';
+                    }
+                }, index * 500);
+            });
+        }
+
+        function createAndDownloadIcon(size) {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+
+            // 그라디언트 배경
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#667eea');
+            gradient.addColorStop(1, '#764ba2');
+
+            // 둥근 모서리 사각형 그리기
+            const radius = size * 0.1;
+            ctx.beginPath();
+            ctx.moveTo(radius, 0);
+            ctx.lineTo(size - radius, 0);
+            ctx.quadraticCurveTo(size, 0, size, radius);
+            ctx.lineTo(size, size - radius);
+            ctx.quadraticCurveTo(size, size, size - radius, size);
+            ctx.lineTo(radius, size);
+            ctx.quadraticCurveTo(0, size, 0, size - radius);
+            ctx.lineTo(0, radius);
+            ctx.quadraticCurveTo(0, 0, radius, 0);
+            ctx.fillStyle = gradient;
+            ctx.fill();
+
+            // 아이콘 텍스트 (클립보드)
+            ctx.fillStyle = 'white';
+            ctx.font = `bold ${size * 0.4}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('📋', size/2, size/2);
+
+            // 다운로드 링크 생성
+            canvas.toBlob(function(blob) {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `icon-${size}x${size}.png`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }, 'image/png');
+        }
+    </script>
+</body>
+</html>
