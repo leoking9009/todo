@@ -3775,6 +3775,7 @@ async function executeCsvImport() {
     return;
   }
   
+  console.log('CSV 파싱된 데이터:', csvParsedData);
   const confirmImport = confirm(`${csvParsedData.length}개의 과제를 등록하시겠습니까?`);
   if (!confirmImport) return;
   
@@ -3789,8 +3790,17 @@ async function executeCsvImport() {
     const errors = [];
     
     for (let i = 0; i < csvParsedData.length; i++) {
+      const csvRow = csvParsedData[i];
+      
+      // 필수 필드 검증
+      if (!csvRow || !csvRow.assignee || !csvRow.task_name) {
+        failCount++;
+        errors.push(`${i + 1}번째 과제: 담당자 또는 과제명이 없습니다. (담당자: "${csvRow?.assignee || ''}", 과제명: "${csvRow?.task_name || ''}")`);
+        continue;
+      }
+      
       const taskData = {
-        ...csvParsedData[i],
+        ...csvRow,
         user_id: currentUser.id,
         user_email: currentUser.email
       };
@@ -3804,17 +3814,26 @@ async function executeCsvImport() {
           body: JSON.stringify(taskData)
         });
         
+        if (!response.ok) {
+          failCount++;
+          errors.push(`${i + 1}번째 과제: HTTP ${response.status} - ${response.statusText}`);
+          continue;
+        }
+        
         const result = await response.json();
         
         if (result.success) {
           successCount++;
         } else {
           failCount++;
-          errors.push(`${i + 1}번째 과제: ${result.message}`);
+          const errorMsg = result.message || result.error || JSON.stringify(result) || '알 수 없는 오류';
+          errors.push(`${i + 1}번째 과제: ${errorMsg}`);
+          console.error(`과제 ${i + 1} 실패:`, result, taskData);
         }
       } catch (error) {
         failCount++;
-        errors.push(`${i + 1}번째 과제: 네트워크 오류`);
+        errors.push(`${i + 1}번째 과제: ${error.message || '네트워크 오류'}`);
+        console.error(`과제 ${i + 1} 예외:`, error, taskData);
       }
     }
     
