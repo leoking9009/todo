@@ -1932,21 +1932,25 @@ async function exportToExcel() {
     // TODO 데이터 가져오기
     let todoData = [];
     try {
-      if (typeof todos !== 'undefined') {
-        todoData = todos;
+      const todoResponse = await fetch(`${API_BASE}/todos?user_id=${currentUser.id}`);
+      const todoResult = await todoResponse.json();
+      if (todoResult.success && todoResult.data) {
+        todoData = todoResult.data;
       }
     } catch (e) {
-      console.log('TODO 데이터 없음');
+      console.log('TODO 데이터 가져오기 실패:', e);
     }
     
     // 게시판 데이터 가져오기
     let boardData = [];
     try {
-      if (typeof boardPosts !== 'undefined') {
-        boardData = boardPosts;
+      const boardResponse = await fetch(`${API_BASE}/board?category=all&limit=1000`);
+      const boardResult = await boardResponse.json();
+      if (boardResult.success && boardResult.data) {
+        boardData = boardResult.data;
       }
     } catch (e) {
-      console.log('게시판 데이터 없음');
+      console.log('게시판 데이터 가져오기 실패:', e);
     }
 
     // 일지 데이터 가져오기
