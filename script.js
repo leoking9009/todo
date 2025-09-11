@@ -638,6 +638,11 @@ function switchTab(tabName) {
   
   currentTab = tabName;
   refreshCurrentTab();
+  
+  // 과제 등록 탭일 때 마감기한을 오늘로 설정
+  if (tabName === 'add') {
+    setTimeout(() => setDefaultDeadlineToToday(), 100);
+  }
 }
 
 // 대시보드 통계 카드에서 탭으로 이동
@@ -2590,5 +2595,19 @@ document.addEventListener('DOMContentLoaded', function() {
   setupNetworkStatusIndicator();
   setupPWAEventListeners();
   
+  // 마감기한 기본값을 오늘로 설정
+  setDefaultDeadlineToToday();
+  
   // 게시판 이벤트 리스너는 게시판 탭이 활성화될 때 설정됨
 });
+
+// 마감기한 기본값을 오늘 날짜로 설정하는 함수
+function setDefaultDeadlineToToday() {
+  const deadlineInput = document.getElementById('deadline');
+  if (deadlineInput) {
+    const today = new Date();
+    const todayString = today.toISOString().split('T')[0];
+    deadlineInput.value = todayString;
+    console.log('마감기한 기본값을 오늘로 설정:', todayString);
+  }
+}
