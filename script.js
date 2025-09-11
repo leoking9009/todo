@@ -300,6 +300,7 @@ function renderTaskGrid(tasks, containerId) {
         <p><strong>생성일:</strong> ${formatDate(task.created_date)}</p>
         ${task.deadline ? `<p><strong>마감기한:</strong> ${formatDate(task.deadline)} ${getDeadlineStatus(task.deadline)}</p>` : ''}
         ${task.submission_target ? `<p><strong>제출처:</strong> ${escapeHtml(task.submission_target)}</p>` : ''}
+        ${task.status ? `<p><strong>상태:</strong> ${escapeHtml(task.status)}</p>` : ''}
         ${task.notes ? `<p><strong>비고:</strong> ${escapeHtml(task.notes)}</p>` : ''}
       </div>
       
@@ -330,6 +331,7 @@ function renderTaskTable(tasks, containerId) {
             <th>담당자</th>
             <th>마감기한</th>
             <th>제출처</th>
+            <th>상태</th>
             <th>생성일</th>
             <th>비고</th>
             <th>작업</th>
@@ -353,6 +355,7 @@ function renderTaskTable(tasks, containerId) {
                 ${task.deadline ? formatDate(task.deadline) : '-'}
               </td>
               <td>${task.submission_target ? escapeHtml(task.submission_target) : '-'}</td>
+              <td class="status-cell">${task.status ? escapeHtml(task.status) : '시작전'}</td>
               <td class="created-cell">${formatDate(task.created_date)}</td>
               <td class="notes-cell" title="${task.notes ? escapeHtml(task.notes) : ''}">
                 ${task.notes ? (task.notes.length > 30 ? escapeHtml(task.notes).substring(0, 30) + '...' : escapeHtml(task.notes)) : '-'}
@@ -457,6 +460,7 @@ function showAssigneeDetails(assigneeName) {
             <p><strong>생성일:</strong> ${formatDate(task.created_date)}</p>
             <p><strong>마감기한:</strong> ${formatDate(task.deadline)}</p>
             ${task.submission_target ? `<p><strong>제출처:</strong> ${escapeHtml(task.submission_target)}</p>` : ''}
+            ${task.status ? `<p><strong>상태:</strong> ${escapeHtml(task.status)}</p>` : ''}
             ${task.notes ? `<p><strong>비고:</strong> ${escapeHtml(task.notes)}</p>` : ''}
           </div>
           
@@ -543,6 +547,7 @@ async function submitTask(event) {
     notes: formData.get('notes').trim() || null,
     deadline: formData.get('deadline') || null,
     created_date: formData.get('createdDate'),
+    status: formData.get('status') || '시작전',
     user_id: currentUser.id
   };
   
@@ -3143,7 +3148,7 @@ function parseCsvData(csvText) {
       }
       
       // 필드 매핑을 더 유연하게 처리
-      let assignee, taskName, deadline, urgent, submissionTarget, notes;
+      let assignee, taskName, deadline, urgent, submissionTarget, notes, status;
       
       // 헤더 매핑이 있으면 사용, 없으면 기본 순서로 처리
       if (window.csvHeaderMapping && (
@@ -3159,8 +3164,9 @@ function parseCsvData(csvText) {
         urgent = fields[mapping.urgentIndex] || '';
         submissionTarget = fields[mapping.submissionTargetIndex] || '';
         notes = fields[mapping.notesIndex] || '';
+        status = fields[mapping.statusIndex] || '시작전';
         
-        console.log(`${i + 1}번째 줄 헤더 기반 매핑:`, {assignee, taskName, deadline, urgent, submissionTarget, notes});
+        console.log(`${i + 1}번째 줄 헤더 기반 매핑:`, {assignee, taskName, deadline, urgent, submissionTarget, notes, status});
       } else {
         // 스마트 매핑: 빈 필드를 건너뛰고 실제 데이터가 있는 필드 찾기
         const nonEmptyFields = fields.filter(field => field && field.trim());
@@ -3219,25 +3225,32 @@ function parseCsvData(csvText) {
           urgent = '';
           submissionTarget = '';
           notes = '';
+          status = '시작전';
           
-          console.log(`${i + 1}번째 줄 스마트 매핑:`, {assignee, taskName, deadline, urgent, submissionTarget, notes});
+          console.log(`${i + 1}번째 줄 스마트 매핑:`, {assignee, taskName, deadline, urgent, submissionTarget, notes, status});
         } else {
           // 기존 순서 기반 매핑
-          if (fields.length >= 6) {
-            // 6개 이상: 담당자, 과제명, 마감기한, 긴급여부, 제출처, 비고
+          if (fields.length >= 9) {
+            // 9개: 담당자, 과제명, 긴급, 생성일시, 마감일, 완료, 제출처, 비고, 상태
+            [assignee, taskName, urgent, , deadline, , submissionTarget, notes, status] = fields;
+          } else if (fields.length >= 6) {
+            // 6-8개: 담당자, 과제명, 마감기한, 긴급여부, 제출처, 비고
             [assignee, taskName, deadline, urgent, submissionTarget, notes] = fields;
+            status = fields[6] || '시작전';
           } else if (fields.length >= 4) {
             // 4-5개: 담당자, 과제명, 마감기한, 긴급여부, (제출처/비고)
             [assignee, taskName, deadline, urgent, submissionTarget] = fields;
             notes = fields[5] || '';
+            status = '시작전';
           } else {
             // 3개: 담당자, 과제명, 마감기한
             [assignee, taskName, deadline] = fields;
             urgent = '';
             submissionTarget = '';
             notes = '';
+            status = '시작전';
           }
-          console.log(`${i + 1}번째 줄 순서 기반 매핑:`, {assignee, taskName, deadline, urgent, submissionTarget, notes});
+          console.log(`${i + 1}번째 줄 순서 기반 매핑:`, {assignee, taskName, deadline, urgent, submissionTarget, notes, status});
         }
       }
       
@@ -3369,7 +3382,8 @@ function parseCsvData(csvText) {
         deadline: isoDeadline,
         is_urgent: isUrgent,
         submission_target: submissionTarget ? submissionTarget.trim() : '',
-        notes: notes ? notes.trim() : ''
+        notes: notes ? notes.trim() : '',
+        status: status ? status.trim() : '시작전'
       });
     }
     
@@ -3401,7 +3415,8 @@ function analyzeHeaderMapping(headers) {
     urgentIndex: -1,
     submissionTargetIndex: -1,
     notesIndex: -1,
-    completedIndex: -1
+    completedIndex: -1,
+    statusIndex: -1
   };
   
   for (let i = 0; i < headers.length; i++) {
@@ -3432,8 +3447,12 @@ function analyzeHeaderMapping(headers) {
       mapping.notesIndex = i;
     }
     // 완료여부
-    else if (header.includes('완료') || header.includes('completed') || header.includes('상태') || header.includes('status')) {
+    else if (header.includes('완료') || header.includes('completed')) {
       mapping.completedIndex = i;
+    }
+    // 상태
+    else if (header.includes('상태') || header.includes('status') || header.includes('진행') || header.includes('progress')) {
+      mapping.statusIndex = i;
     }
   }
   
