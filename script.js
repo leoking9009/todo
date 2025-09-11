@@ -14,6 +14,19 @@ async function handleCredentialResponse(response) {
     // JWT 토큰 디코딩 (간단한 파싱)
     const payload = JSON.parse(atob(idToken.split('.')[1]));
     
+    // 허용된 이메일 주소 확인
+    const allowedEmail = 'leo9009@gmail.com';
+    if (payload.email !== allowedEmail) {
+      console.log('접근 거부:', payload.email);
+      alert('접근이 제한되었습니다. 승인된 계정으로만 로그인할 수 있습니다.');
+      
+      // 구글 로그인 상태 초기화
+      if (typeof google !== 'undefined' && google.accounts) {
+        google.accounts.id.disableAutoSelect();
+      }
+      return;
+    }
+    
     currentUser = {
       id: payload.sub,
       name: payload.name,
@@ -25,6 +38,7 @@ async function handleCredentialResponse(response) {
     saveUserSession(currentUser);
 
     // 로그인 성공 처리
+    console.log('로그인 성공:', currentUser.email);
     showApp();
     await loadDashboard();
     
@@ -2311,7 +2325,17 @@ async function checkAutoLogin() {
   
   const savedUser = loadUserSession();
   if (savedUser) {
-    console.log('저장된 사용자 세션 발견:', savedUser.name);
+    // 허용된 이메일 주소 확인
+    const allowedEmail = 'leo9009@gmail.com';
+    if (savedUser.email !== allowedEmail) {
+      console.log('접근 거부 - 저장된 세션:', savedUser.email);
+      clearUserSession(); // 허가되지 않은 세션 삭제
+      document.getElementById('login-container').style.display = 'block';
+      document.getElementById('app-container').style.display = 'none';
+      return;
+    }
+    
+    console.log('저장된 사용자 세션 발견:', savedUser.email);
     currentUser = savedUser;
     showApp();
     await loadDashboard();
