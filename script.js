@@ -3180,28 +3180,39 @@ function parseCSVLine(line) {
 
 // 날짜 형식 검증 및 변환 함수
 function isValidDate(dateString) {
-  if (!dateString || typeof dateString !== 'string') return false;
+  if (!dateString || typeof dateString !== 'string') {
+    console.log('날짜 검증 실패: 빈 값 또는 문자열이 아님:', dateString);
+    return false;
+  }
   
   const trimmed = dateString.trim();
+  if (!trimmed) {
+    console.log('날짜 검증 실패: 빈 문자열');
+    return false;
+  }
+  
+  console.log('날짜 검증 시도:', trimmed);
   
   // YYYY-MM-DD 형식 (이미 올바른 형식)
   const iso8601Regex = /^\d{4}-\d{2}-\d{2}$/;
   if (iso8601Regex.test(trimmed)) {
     const date = new Date(trimmed);
-    return !isNaN(date.getTime()) && trimmed === date.toISOString().split('T')[0];
+    const isValid = !isNaN(date.getTime()) && trimmed === date.toISOString().split('T')[0];
+    console.log('YYYY-MM-DD 형식 검증:', isValid);
+    return isValid;
   }
   
   // 다른 형식들 시도
   let date;
   
   // YYYY/MM/DD 형식
-  const slashRegex = /^\d{4}\/\d{1,2}\/\d{1,2}$/;
-  if (slashRegex.test(trimmed)) {
+  const slashYearFirstRegex = /^\d{4}\/\d{1,2}\/\d{1,2}$/;
+  if (slashYearFirstRegex.test(trimmed)) {
     const [year, month, day] = trimmed.split('/').map(num => parseInt(num, 10));
     date = new Date(year, month - 1, day);
-    if (!isNaN(date.getTime()) && date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day) {
-      return true;
-    }
+    const isValid = !isNaN(date.getTime()) && date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
+    console.log('YYYY/MM/DD 형식 검증:', isValid, `(${year}-${month}-${day})`);
+    if (isValid) return true;
   }
   
   // YYYY.MM.DD 형식
@@ -3209,41 +3220,72 @@ function isValidDate(dateString) {
   if (dotRegex.test(trimmed)) {
     const [year, month, day] = trimmed.split('.').map(num => parseInt(num, 10));
     date = new Date(year, month - 1, day);
-    if (!isNaN(date.getTime()) && date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day) {
-      return true;
-    }
+    const isValid = !isNaN(date.getTime()) && date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
+    console.log('YYYY.MM.DD 형식 검증:', isValid, `(${year}-${month}-${day})`);
+    if (isValid) return true;
   }
   
-  // MM/DD/YYYY 형식 (미국식)
-  const usRegex = /^\d{1,2}\/\d{1,2}\/\d{4}$/;
-  if (usRegex.test(trimmed)) {
-    const [month, day, year] = trimmed.split('/').map(num => parseInt(num, 10));
-    date = new Date(year, month - 1, day);
-    if (!isNaN(date.getTime()) && date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day) {
-      return true;
-    }
-  }
-  
-  // DD/MM/YYYY 형식 (유럽식) - 월과 일이 12보다 큰지로 판단
-  const euRegex = /^\d{1,2}\/\d{1,2}\/\d{4}$/;
-  if (euRegex.test(trimmed)) {
+  // MM/DD/YYYY 또는 DD/MM/YYYY 형식 처리
+  const generalSlashRegex = /^\d{1,2}\/\d{1,2}\/\d{4}$/;
+  if (generalSlashRegex.test(trimmed)) {
     const parts = trimmed.split('/').map(num => parseInt(num, 10));
-    // 첫 번째 숫자가 12보다 크면 DD/MM/YYYY로 간주
-    if (parts[0] > 12 || (parts[1] <= 12 && parts[0] <= 31)) {
+    
+    // MM/DD/YYYY 시도 (첫 번째가 월, 두 번째가 일)
+    if (parts[0] <= 12 && parts[1] <= 31) {
+      const [month, day, year] = parts;
+      date = new Date(year, month - 1, day);
+      if (!isNaN(date.getTime()) && date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day) {
+        console.log('MM/DD/YYYY 형식 검증: 성공', `(${year}-${month}-${day})`);
+        return true;
+      }
+    }
+    
+    // DD/MM/YYYY 시도 (첫 번째가 일, 두 번째가 월)
+    if (parts[1] <= 12 && parts[0] <= 31) {
       const [day, month, year] = parts;
       date = new Date(year, month - 1, day);
       if (!isNaN(date.getTime()) && date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day) {
+        console.log('DD/MM/YYYY 형식 검증: 성공', `(${year}-${month}-${day})`);
         return true;
       }
     }
   }
   
-  // 마지막으로 브라우저의 Date 파싱 시도
-  date = new Date(trimmed);
-  if (!isNaN(date.getTime())) {
-    return true;
+  // 한국식 날짜 형식들 추가 지원
+  // YYYY년 MM월 DD일
+  const koreanRegex1 = /^(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일$/;
+  const koreanMatch1 = trimmed.match(koreanRegex1);
+  if (koreanMatch1) {
+    const [, year, month, day] = koreanMatch1.map(str => parseInt(str, 10));
+    date = new Date(year, month - 1, day);
+    const isValid = !isNaN(date.getTime()) && date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
+    console.log('YYYY년 MM월 DD일 형식 검증:', isValid, `(${year}-${month}-${day})`);
+    if (isValid) return true;
   }
   
+  // YYYY-MM-DD에서 0이 빠진 형식들
+  const relaxedIsoRegex = /^(\d{4})-(\d{1,2})-(\d{1,2})$/;
+  const relaxedIsoMatch = trimmed.match(relaxedIsoRegex);
+  if (relaxedIsoMatch) {
+    const [, year, month, day] = relaxedIsoMatch.map(str => parseInt(str, 10));
+    date = new Date(year, month - 1, day);
+    const isValid = !isNaN(date.getTime()) && date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
+    console.log('YYYY-M-D 형식 검증:', isValid, `(${year}-${month}-${day})`);
+    if (isValid) return true;
+  }
+  
+  // 마지막으로 브라우저의 Date 파싱 시도
+  try {
+    date = new Date(trimmed);
+    if (!isNaN(date.getTime()) && date.getFullYear() > 1900 && date.getFullYear() < 2100) {
+      console.log('브라우저 파싱 성공:', date.toISOString().split('T')[0]);
+      return true;
+    }
+  } catch (e) {
+    console.log('브라우저 파싱 실패:', e.message);
+  }
+  
+  console.log('모든 날짜 형식 검증 실패:', trimmed);
   return false;
 }
 
@@ -3252,22 +3294,26 @@ function convertToISODate(dateString) {
   if (!dateString || typeof dateString !== 'string') return null;
   
   const trimmed = dateString.trim();
+  console.log('날짜 변환 시도:', trimmed);
   
   // 이미 YYYY-MM-DD 형식이면 그대로 반환
   const iso8601Regex = /^\d{4}-\d{2}-\d{2}$/;
   if (iso8601Regex.test(trimmed)) {
+    console.log('이미 ISO 형식:', trimmed);
     return trimmed;
   }
   
   let date;
   
   // YYYY/MM/DD 형식
-  const slashRegex = /^\d{4}\/\d{1,2}\/\d{1,2}$/;
-  if (slashRegex.test(trimmed)) {
+  const slashYearFirstRegex = /^\d{4}\/\d{1,2}\/\d{1,2}$/;
+  if (slashYearFirstRegex.test(trimmed)) {
     const [year, month, day] = trimmed.split('/').map(num => parseInt(num, 10));
     date = new Date(year, month - 1, day);
     if (!isNaN(date.getTime())) {
-      return date.toISOString().split('T')[0];
+      const result = date.toISOString().split('T')[0];
+      console.log('YYYY/MM/DD 변환 성공:', result);
+      return result;
     }
   }
   
@@ -3277,39 +3323,79 @@ function convertToISODate(dateString) {
     const [year, month, day] = trimmed.split('.').map(num => parseInt(num, 10));
     date = new Date(year, month - 1, day);
     if (!isNaN(date.getTime())) {
-      return date.toISOString().split('T')[0];
+      const result = date.toISOString().split('T')[0];
+      console.log('YYYY.MM.DD 변환 성공:', result);
+      return result;
     }
   }
   
-  // MM/DD/YYYY 형식 (미국식)
-  const usRegex = /^\d{1,2}\/\d{1,2}\/\d{4}$/;
-  if (usRegex.test(trimmed)) {
-    const [month, day, year] = trimmed.split('/').map(num => parseInt(num, 10));
-    date = new Date(year, month - 1, day);
-    if (!isNaN(date.getTime())) {
-      return date.toISOString().split('T')[0];
-    }
-  }
-  
-  // DD/MM/YYYY 형식 (유럽식)
-  const euRegex = /^\d{1,2}\/\d{1,2}\/\d{4}$/;
-  if (euRegex.test(trimmed)) {
+  // MM/DD/YYYY 또는 DD/MM/YYYY 형식 처리
+  const generalSlashRegex = /^\d{1,2}\/\d{1,2}\/\d{4}$/;
+  if (generalSlashRegex.test(trimmed)) {
     const parts = trimmed.split('/').map(num => parseInt(num, 10));
-    if (parts[0] > 12 || (parts[1] <= 12 && parts[0] <= 31)) {
+    
+    // MM/DD/YYYY 시도
+    if (parts[0] <= 12 && parts[1] <= 31) {
+      const [month, day, year] = parts;
+      date = new Date(year, month - 1, day);
+      if (!isNaN(date.getTime()) && date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day) {
+        const result = date.toISOString().split('T')[0];
+        console.log('MM/DD/YYYY 변환 성공:', result);
+        return result;
+      }
+    }
+    
+    // DD/MM/YYYY 시도
+    if (parts[1] <= 12 && parts[0] <= 31) {
       const [day, month, year] = parts;
       date = new Date(year, month - 1, day);
-      if (!isNaN(date.getTime())) {
-        return date.toISOString().split('T')[0];
+      if (!isNaN(date.getTime()) && date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day) {
+        const result = date.toISOString().split('T')[0];
+        console.log('DD/MM/YYYY 변환 성공:', result);
+        return result;
       }
     }
   }
   
-  // 마지막으로 브라우저의 Date 파싱 시도
-  date = new Date(trimmed);
-  if (!isNaN(date.getTime())) {
-    return date.toISOString().split('T')[0];
+  // 한국식 날짜 형식들
+  const koreanRegex1 = /^(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일$/;
+  const koreanMatch1 = trimmed.match(koreanRegex1);
+  if (koreanMatch1) {
+    const [, year, month, day] = koreanMatch1.map(str => parseInt(str, 10));
+    date = new Date(year, month - 1, day);
+    if (!isNaN(date.getTime())) {
+      const result = date.toISOString().split('T')[0];
+      console.log('한국식 변환 성공:', result);
+      return result;
+    }
   }
   
+  // YYYY-M-D 형식
+  const relaxedIsoRegex = /^(\d{4})-(\d{1,2})-(\d{1,2})$/;
+  const relaxedIsoMatch = trimmed.match(relaxedIsoRegex);
+  if (relaxedIsoMatch) {
+    const [, year, month, day] = relaxedIsoMatch.map(str => parseInt(str, 10));
+    date = new Date(year, month - 1, day);
+    if (!isNaN(date.getTime())) {
+      const result = date.toISOString().split('T')[0];
+      console.log('YYYY-M-D 변환 성공:', result);
+      return result;
+    }
+  }
+  
+  // 마지막으로 브라우저의 Date 파싱 시도
+  try {
+    date = new Date(trimmed);
+    if (!isNaN(date.getTime()) && date.getFullYear() > 1900 && date.getFullYear() < 2100) {
+      const result = date.toISOString().split('T')[0];
+      console.log('브라우저 파싱 변환 성공:', result);
+      return result;
+    }
+  } catch (e) {
+    console.log('브라우저 파싱 변환 실패:', e.message);
+  }
+  
+  console.log('날짜 변환 실패:', trimmed);
   return null;
 }
 
