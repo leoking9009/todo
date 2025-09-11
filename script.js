@@ -1908,7 +1908,7 @@ function handleTodoFilterClick(event) {
   renderTodos();
 }
 
-// 엑셀 내보내기 함수
+// 엑셀 내보내기 함수 (시트별 분리)
 async function exportToExcel() {
   try {
     console.log('엑셀 내보내기 시작...');
@@ -1947,15 +1947,28 @@ async function exportToExcel() {
       console.log('게시판 데이터 없음');
     }
 
-    // CSV 형식으로 데이터 준비
-    const csvData = [];
+    // 일지 데이터 가져오기
+    let diaryData = [];
+    try {
+      const response = await fetch(`${API_BASE}/diary?user_id=${currentUser.id}&limit=100`);
+      const result = await response.json();
+      if (result.success) {
+        diaryData = result.data || [];
+      }
+    } catch (e) {
+      console.log('일지 데이터 가져오기 실패:', e);
+    }
+
+    // 새로운 워크북 생성
+    const workbook = XLSX.utils.book_new();
     
-    // 과제 데이터
-    csvData.push(['=== 과제 데이터 ===']);
-    csvData.push(['ID', '과제명', '담당자', '마감기한', '생성일', '완료여부', '긴급여부', '제출처', '비고']);
+    // 1. 과제 데이터 시트 생성
+    const taskSheetData = [
+      ['ID', '과제명', '담당자', '마감기한', '생성일', '완료여부', '긴급여부', '제출처', '비고']
+    ];
     
     tasks.forEach(task => {
-      csvData.push([
+      taskSheetData.push([
         task.id || '',
         task.task_name || '',
         task.assignee || '',
@@ -1968,13 +1981,16 @@ async function exportToExcel() {
       ]);
     });
 
-    // TODO 데이터
-    csvData.push(['']); // 빈 줄
-    csvData.push(['=== 개인 TODO 데이터 ===']);
-    csvData.push(['ID', 'TODO 내용', '우선순위', '완료여부', '생성일']);
+    const taskWorksheet = XLSX.utils.aoa_to_sheet(taskSheetData);
+    XLSX.utils.book_append_sheet(workbook, taskWorksheet, '과제 데이터');
+
+    // 2. TODO 데이터 시트 생성
+    const todoSheetData = [
+      ['ID', 'TODO 내용', '우선순위', '완료여부', '생성일']
+    ];
     
     todoData.forEach(todo => {
-      csvData.push([
+      todoSheetData.push([
         todo.id || '',
         todo.text || '',
         todo.priority || '',
@@ -1983,16 +1999,19 @@ async function exportToExcel() {
       ]);
     });
 
-    // 게시판 데이터
-    csvData.push(['']); // 빈 줄
-    csvData.push(['=== 게시판 데이터 ===']);
-    csvData.push(['ID', '제목', '내용', '작성자', '카테고리', '긴급여부', '작성일', '조회수', '좋아요']);
+    const todoWorksheet = XLSX.utils.aoa_to_sheet(todoSheetData);
+    XLSX.utils.book_append_sheet(workbook, todoWorksheet, 'TODO 데이터');
+
+    // 3. 게시판 데이터 시트 생성
+    const boardSheetData = [
+      ['ID', '제목', '내용', '작성자', '카테고리', '긴급여부', '작성일', '조회수', '좋아요']
+    ];
     
     boardData.forEach(post => {
-      csvData.push([
+      boardSheetData.push([
         post.id || '',
         post.title || '',
-        post.content ? post.content.replace(/\n/g, ' ') : '', // 줄바꿈 제거
+        post.content ? post.content.replace(/\n/g, ' ') : '',
         post.author_name || '',
         getCategoryName(post.category) || '',
         post.is_urgent ? '긴급' : '일반',
@@ -2002,50 +2021,80 @@ async function exportToExcel() {
       ]);
     });
 
-    // CSV 문자열 생성
-    const csvContent = csvData.map(row => 
-      row.map(cell => `"${String(cell).replace(/"/g, '""')}"`)
-         .join(',')
-    ).join('\n');
+    const boardWorksheet = XLSX.utils.aoa_to_sheet(boardSheetData);
+    XLSX.utils.book_append_sheet(workbook, boardWorksheet, '게시판 데이터');
 
-    // BOM 추가 (한글 깨짐 방지)
-    const BOM = '\uFEFF';
-    const csvWithBOM = BOM + csvContent;
-
-    // 파일 다운로드
-    const blob = new Blob([csvWithBOM], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
+    // 4. 일지 데이터 시트 생성
+    const diarySheetData = [
+      ['날짜', '실내자전거', '감정 일지', '성장 일지', '작성일']
+    ];
     
-    if (link.download !== undefined) {
-      const url = URL.createObjectURL(blob);
-      link.setAttribute('href', url);
-      
-      // 파일명에 현재 날짜 포함
-      const now = new Date();
-      const dateStr = now.getFullYear() + 
-        String(now.getMonth() + 1).padStart(2, '0') + 
-        String(now.getDate()).padStart(2, '0') + '_' +
-        String(now.getHours()).padStart(2, '0') + 
-        String(now.getMinutes()).padStart(2, '0');
-      
-      link.setAttribute('download', `업무관리_백업_${dateStr}.csv`);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      console.log('엑셀 내보내기 완료');
-      console.log(`데이터가 성공적으로 내보내졌습니다. 파일명: 업무관리_백업_${dateStr}.csv, 포함된 데이터: 과제 ${tasks.length}개, TODO ${todoData.length}개, 게시판 ${boardData.length}개`);
-    }
+    diaryData.forEach(diary => {
+      diarySheetData.push([
+        diary.diary_date ? formatDateForExcel(diary.diary_date) : '',
+        diary.exercise_completed ? '완료' : '미완료',
+        diary.emotion_diary || '',
+        diary.growth_diary || '',
+        diary.created_at ? formatDateForExcel(diary.created_at) : ''
+      ]);
+    });
+
+    const diaryWorksheet = XLSX.utils.aoa_to_sheet(diarySheetData);
+    XLSX.utils.book_append_sheet(workbook, diaryWorksheet, '일지 데이터');
+
+    // 5. 요약 시트 생성
+    const summarySheetData = [
+      ['데이터 요약', ''],
+      ['내보내기 날짜', new Date().toLocaleDateString('ko-KR')],
+      ['내보내기 시간', new Date().toLocaleTimeString('ko-KR')],
+      ['사용자', currentUser.email],
+      [''],
+      ['데이터 개수', ''],
+      ['과제 데이터', tasks.length + '개'],
+      ['TODO 데이터', todoData.length + '개'],
+      ['게시판 데이터', boardData.length + '개'],
+      ['일지 데이터', diaryData.length + '개'],
+      [''],
+      ['시트 구성', ''],
+      ['시트 1', '과제 데이터'],
+      ['시트 2', 'TODO 데이터'],
+      ['시트 3', '게시판 데이터'],
+      ['시트 4', '일지 데이터'],
+      ['시트 5', '요약 (현재 시트)']
+    ];
+
+    const summaryWorksheet = XLSX.utils.aoa_to_sheet(summarySheetData);
+    XLSX.utils.book_append_sheet(workbook, summaryWorksheet, '요약');
+
+    // 파일명에 현재 날짜 포함
+    const now = new Date();
+    const dateStr = now.getFullYear() + 
+      String(now.getMonth() + 1).padStart(2, '0') + 
+      String(now.getDate()).padStart(2, '0') + '_' +
+      String(now.getHours()).padStart(2, '0') + 
+      String(now.getMinutes()).padStart(2, '0');
+    
+    const fileName = `업무관리_백업_${dateStr}.xlsx`;
+
+    // Excel 파일 다운로드
+    XLSX.writeFile(workbook, fileName);
+    
+    console.log('엑셀 내보내기 완료');
+    console.log(`데이터가 성공적으로 내보내졌습니다. 파일명: ${fileName}`);
+    console.log(`포함된 데이터: 과제 ${tasks.length}개, TODO ${todoData.length}개, 게시판 ${boardData.length}개, 일지 ${diaryData.length}개`);
+
+    // 로딩 해제
+    exportBtn.innerHTML = originalText;
+    exportBtn.disabled = false;
 
   } catch (error) {
-    console.error('엑셀 내보내기 오류:', error);
+    console.error('데이터 내보내기 중 오류:', error);
     alert('데이터 내보내기 중 오류가 발생했습니다.');
-  } finally {
-    // 버튼 상태 복원
+    
+    // 로딩 해제
     const exportBtn = document.getElementById('exportExcelButton');
     if (exportBtn) {
-      exportBtn.innerHTML = originalText;
+      exportBtn.innerHTML = '<i class="fas fa-file-excel"></i> 엑셀 내보내기';
       exportBtn.disabled = false;
     }
   }
