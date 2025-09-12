@@ -801,7 +801,7 @@ function getTodayTasks() {
   const todayStr = today.toISOString().split('T')[0];
   
   return allTasks.filter(task => {
-    if (!task.deadline) return false;
+    if (!task.deadline || task.is_completed) return false; // 완료된 과제 제외
     const deadlineStr = new Date(task.deadline).toISOString().split('T')[0];
     return deadlineStr === todayStr;
   });
