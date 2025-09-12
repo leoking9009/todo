@@ -2196,6 +2196,8 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   border-left: 3px solid transparent;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .calendar-task:hover {

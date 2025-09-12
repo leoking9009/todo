@@ -1029,8 +1029,15 @@ function createCalendarDate(date, currentMonth) {
         }
       }
       
-      taskElement.textContent = task.task_name;
-      taskElement.title = `담당자: ${task.assignee}\n과제: ${task.task_name}`;
+      // 과제명을 적절한 길이로 자르기 (화면 크기에 따라 동적 조정)
+      const isMobile = window.innerWidth <= 768;
+      const maxLength = isMobile ? 8 : 12; // 모바일에서는 더 짧게
+      const displayName = task.task_name.length > maxLength 
+        ? task.task_name.substring(0, maxLength) + '...' 
+        : task.task_name;
+      
+      taskElement.textContent = displayName;
+      taskElement.title = `담당자: ${task.assignee}\n과제: ${task.task_name}${task.deadline ? `\n마감: ${formatDate(task.deadline)}` : ''}${task.status ? `\n상태: ${task.status}` : ''}`;
       
       // 클릭 시 과제 상세 정보 표시
       taskElement.addEventListener('click', () => showTaskDetail(task));
