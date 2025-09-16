@@ -244,7 +244,7 @@ function refreshCurrentTab() {
       renderTaskList(allTasks.filter(task => task.is_completed), 'completedTaskList');
       break;
     case 'urgent':
-      renderTaskList(allTasks.filter(task => task.is_urgent), 'urgentTaskList');
+      renderTaskList(allTasks.filter(task => task.is_urgent && !task.is_completed), 'urgentTaskList');
       break;
     case 'assignee':
       renderAssigneeView();
@@ -432,7 +432,7 @@ function renderAssigneeView() {
 
 // 담당자 세부사항 표시
 function showAssigneeDetails(assigneeName) {
-  const assigneeTasks = allTasks.filter(task => task.assignee === assigneeName);
+  const assigneeTasks = allTasks.filter(task => task.assignee === assigneeName && !task.is_completed);
   const container = document.getElementById('assigneeDetails');
   
   container.innerHTML = `
