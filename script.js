@@ -1792,6 +1792,51 @@ async function deleteTodo(todoId) {
   }
 }
 
+async function editTodo(todoId) {
+  const todo = todos.find(t => t.id === todoId);
+  if (!todo) {
+    alert('TODO를 찾을 수 없습니다.');
+    return;
+  }
+
+  const newText = prompt('TODO 내용을 수정하세요:', todo.text);
+  if (newText === null || newText.trim() === '') {
+    return;
+  }
+
+  const newPriority = prompt('우선순위를 선택하세요 (low, medium, high):', todo.priority);
+  if (newPriority === null || !['low', 'medium', 'high'].includes(newPriority)) {
+    alert('유효하지 않은 우선순위입니다. low, medium, high 중 하나를 입력해주세요.');
+    return;
+  }
+
+  try {
+    const response = await fetch(`${API_BASE}/todos/${todoId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        user_id: currentUser.id,
+        text: newText.trim(),
+        priority: newPriority,
+        is_completed: todo.is_completed
+      })
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      await loadTodos(); // TODO 목록 다시 로드
+    } else {
+      alert('TODO 수정 중 오류가 발생했습니다.');
+    }
+  } catch (error) {
+    console.error('TODO 수정 중 오류:', error);
+    alert('TODO 수정 중 오류가 발생했습니다.');
+  }
+}
+
 function renderTodos() {
   const todoList = document.getElementById('todo-list');
   if (!todoList) return;
@@ -1847,6 +1892,9 @@ function renderTodos() {
         </div>
         
         <div class="todo-actions">
+          <button class="todo-action-btn edit" onclick="editTodo(${todo.id})" title="수정">
+            <i class="fas fa-edit"></i>
+          </button>
           <button class="todo-action-btn delete" onclick="deleteTodo(${todo.id})" title="삭제">
             <i class="fas fa-trash"></i>
           </button>
@@ -2149,6 +2197,7 @@ window.openEditPostModal = openEditPostModal;
 window.deletePost = deletePost;
 window.toggleTodoComplete = toggleTodoComplete;
 window.deleteTodo = deleteTodo;
+window.editTodo = editTodo;
 window.openEditModal = openEditModal;
 window.closeEditModal = closeEditModal;
 window.toggleAssigneeView = toggleAssigneeView;
